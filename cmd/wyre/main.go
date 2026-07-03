@@ -8,39 +8,39 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/crossxr/wyre/internal/server"
+	"github.com/crossxr/wyre"
 )
 
 func main() {
-	router := server.NewRouter()
+	router := wyre.NewRouter()
 
-	router.Use(func(next server.Handler) server.Handler {
-		return server.HandlerFunc(func(w *server.ResponseWriter, r *server.Request) {
+	router.Use(func(next wyre.Handler) wyre.Handler {
+		return wyre.HandlerFunc(func(w *wyre.ResponseWriter, r *wyre.Request) {
 			start := time.Now()
 			next.ServeHTTP(w, r)
 			log.Printf("%s %s %s - %s", r.Method, r.Path, r.Proto, time.Since(start))
 		})
 	})
 
-	router.HandleFunc("GET", "/", func(w *server.ResponseWriter, r *server.Request) {
+	router.HandleFunc("GET", "/", func(w *wyre.ResponseWriter, r *wyre.Request) {
 		w.WriteFixedBody(200, "text/plain", []byte("wyre is alive\n"))
 	})
 
-	router.HandleFunc("GET", "/hello", func(w *server.ResponseWriter, r *server.Request) {
+	router.HandleFunc("GET", "/hello", func(w *wyre.ResponseWriter, r *wyre.Request) {
 		w.Header().Set("X-Powered-By", "wyre")
 		w.WriteFixedBody(200, "text/plain", []byte("hello from wyre\n"))
 	})
 
-	router.HandleFunc("GET", "/hello/:name", func(w *server.ResponseWriter, r *server.Request) {
+	router.HandleFunc("GET", "/hello/:name", func(w *wyre.ResponseWriter, r *wyre.Request) {
 		name := r.Param("name")
 		w.Header().Set("X-Powered-By", "wyre")
 		w.WriteFixedBody(200, "text/plain", []byte("hello "+name+"\n"))
 	})
 
-	cfg := server.DefaultConfig(":8080")
+	cfg := wyre.DefaultConfig(":8080")
 	cfg.Handler = router
 
-	srv := server.NewWithConfig(cfg)
+	srv := wyre.NewWithConfig(cfg)
 
 	errCh := make(chan error, 1)
 	go func() {

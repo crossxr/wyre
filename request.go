@@ -1,7 +1,8 @@
-package server
+package wyre
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -92,6 +93,10 @@ func (r *Request) Param(key string) string {
 // server loop before the handler runs — see Part 5 note on buffering).
 func (r *Request) BodyBytes() []byte {
 	return r.rawBody
+}
+
+func (r *Request) ReadJSON(dst interface{}) error {
+	return json.Unmarshal(r.rawBody, dst)
 }
 
 func (r *Request) Header(key string) string {

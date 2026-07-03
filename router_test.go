@@ -1,10 +1,15 @@
-package server
+package wyre
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -226,5 +231,171 @@ func TestRouterCompatWrapper(t *testing.T) {
 	body, _ := io.ReadAll(resp.Body)
 	if string(body) != "compat body" {
 		t.Errorf("expected 'compat body', got %q", body)
+	}
+}
+
+func TestJSONHelpers(t *testing.T) {
+	router := NewRouter()
+	type userReq struct {
+		Name string `json:"name"`
+	}
+	type userResp struct {
+		Greeting string `json:"greeting"`
+	}
+
+	router.HandleFunc("POST", "/json", func(w *ResponseWriter, r *Request) {
+		var req userReq
+		if err := r.ReadJSON(&req); err != nil {
+			w.WriteFixedBody(400, "text/plain", []byte("bad request"))
+			return
+		}
+		w.WriteJSON(201, userResp{Greeting: "hello " + req.Name})
+	})
+
+	cfg := DefaultConfig("127.0.0.1:0")
+	cfg.Handler = router
+	srv := NewWithConfig(cfg)
+
+	ln, err := net.Listen("tcp", cfg.Addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv.ln = ln
+	addr := ln.Addr().String()
+
+	go srv.serve()
+	defer srv.Shutdown(context.Background())
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+		},
+	}
+
+	jsonBytes, _ := json.Marshal(userReq{Name: "wyre"})
+	resp, err := client.Post("http://"+addr+"/json", "application/json", bytes.NewReader(jsonBytes))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 201 {
+		t.Errorf("expected 201, got %d", resp.StatusCode)
+	}
+	if !strings.Contains(resp.Header.Get("Content-Type"), "application/json") {
+		t.Errorf("expected Content-Type application/json, got %q", resp.Header.Get("Content-Type"))
+	}
+	var res userResp
+	json.NewDecoder(resp.Body).Decode(&res)
+	if res.Greeting != "hello wyre" {
+		t.Errorf("expected greeting 'hello wyre', got %q", res.Greeting)
+	}
+}
+
+func TestFileServer(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "static-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	filePath := filepath.Join(tmpDir, "static", "test.txt")
+	os.MkdirAll(filepath.Dir(filePath), 0755)
+	os.WriteFile(filePath, []byte("static file content"), 0644)
+
+	router := NewRouter()
+	router.Handle("GET", "/static/:filename", FileServer(tmpDir))
+
+	cfg := DefaultConfig("127.0.0.1:0")
+	cfg.Handler = router
+	srv := NewWithConfig(cfg)
+
+	ln, err := net.Listen("tcp", cfg.Addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv.ln = ln
+	addr := ln.Addr().String()
+
+	go srv.serve()
+	defer srv.Shutdown(context.Background())
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+		},
+	}
+
+	resp, err := client.Get("http://" + addr + "/static/test.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		t.Errorf("expected 200, got %d", resp.StatusCode)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	if string(body) != "static file content" {
+		t.Errorf("expected 'static file content', got %q", body)
+	}
+}
+
+func TestCORSAndRecoveryMiddlewares(t *testing.T) {
+	router := NewRouter()
+
+	router.Use(Recovery())
+	router.Use(CORS(CORSConfig{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST"},
+		AllowedHeaders: []string{"Content-Type"},
+	}))
+
+	router.HandleFunc("GET", "/panic", func(w *ResponseWriter, r *Request) {
+		panic("something went wrong")
+	})
+
+	router.HandleFunc("GET", "/ok", func(w *ResponseWriter, r *Request) {
+		w.WriteFixedBody(200, "text/plain", []byte("ok"))
+	})
+
+	cfg := DefaultConfig("127.0.0.1:0")
+	cfg.Handler = router
+	srv := NewWithConfig(cfg)
+
+	ln, err := net.Listen("tcp", cfg.Addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv.ln = ln
+	addr := ln.Addr().String()
+
+	go srv.serve()
+	defer srv.Shutdown(context.Background())
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+		},
+	}
+
+	// 1. Test CORS
+	resp, err := client.Get("http://" + addr + "/ok")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.Header.Get("Access-Control-Allow-Origin") != "*" {
+		t.Errorf("expected Access-Control-Allow-Origin: *, got %q", resp.Header.Get("Access-Control-Allow-Origin"))
+	}
+
+	// 2. Test Recovery
+	resp2, err := client.Get("http://" + addr + "/panic")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp2.Body.Close()
+	if resp2.StatusCode != 500 {
+		t.Errorf("expected 500 on panic, got %d", resp2.StatusCode)
 	}
 }

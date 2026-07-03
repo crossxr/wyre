@@ -1,7 +1,8 @@
-package server
+package wyre
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -208,6 +209,20 @@ func WriteError(conn net.Conn, code int) {
 	bw.WriteString("\r\n")
 	bw.WriteString(body)
 	bw.Flush()
+}
+
+func (w *ResponseWriter) WriteJSON(code int, v interface{}) error {
+	w.header.Set("Content-Type", "application/json")
+	body, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	w.header.Set("Content-Length", strconv.Itoa(len(body)))
+	if err := w.WriteHeader(code); err != nil {
+		return err
+	}
+	_, err = w.Write(body)
+	return err
 }
 
 var _ io.Writer = (*ResponseWriter)(nil)
