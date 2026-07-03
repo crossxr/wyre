@@ -14,6 +14,14 @@ import (
 func main() {
 	router := server.NewRouter()
 
+	router.Use(func(next server.Handler) server.Handler {
+		return server.HandlerFunc(func(w *server.ResponseWriter, r *server.Request) {
+			start := time.Now()
+			next.ServeHTTP(w, r)
+			log.Printf("%s %s %s - %s", r.Method, r.Path, r.Proto, time.Since(start))
+		})
+	})
+
 	router.HandleFunc("GET", "/", func(w *server.ResponseWriter, r *server.Request) {
 		w.WriteFixedBody(200, "text/plain", []byte("wyre is alive\n"))
 	})
