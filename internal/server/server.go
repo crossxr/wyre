@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bufio"
 	"log"
 	"net"
 )
@@ -34,5 +35,14 @@ func (s *Server) ListenAndServe() error {
 
 func (s *Server) handleConn(conn net.Conn) {
 	defer conn.Close()
-	// Part 1 picks up here: read raw bytes, parse request line + headers
+	reader := bufio.NewReader(conn)
+
+	req, err := ParseRequest(reader)
+	if err != nil {
+		log.Printf("parse error from %s: %v", conn.RemoteAddr(), err)
+		return
+	}
+	req.RemoteAddr = conn.RemoteAddr().String()
+
+	log.Printf("%s %s %s (%d headers)", req.Method, req.Target, req.Proto, len(req.Headers))
 }
