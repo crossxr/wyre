@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"strings"
 )
 
 var statusText = map[int]string{
@@ -38,13 +39,38 @@ func StatusText(code int) string {
 	return "Unknown Status"
 }
 
+// Header is a case-insensitive multi-value header map, modeled after
+// net/http.Header so handlers written against oun feel familiar.
+type Header map[string][]string
+
+func (h Header) Set(key, value string) {
+	h[strings.ToLower(key)] = []string{value}
+}
+
+func (h Header) Add(key, value string) {
+	k := strings.ToLower(key)
+	h[k] = append(h[k], value)
+}
+
+func (h Header) Get(key string) string {
+	vals := h[strings.ToLower(key)]
+	if len(vals) == 0 {
+		return ""
+	}
+	return vals[0]
+}
+
+func (h Header) Del(key string) {
+	delete(h, strings.ToLower(key))
+}
+
 // ResponseWriter is the handler-facing API for writing a response.
 // It enforces header-before-body ordering and tracks write state so
 // a connection can never end up with a malformed response on the wire.
 type ResponseWriter struct {
 	conn         net.Conn
 	bw           *bufio.Writer
-	headers      map[string][]string
+	header       Header
 	statusCode   int
 	wroteHeader  bool
 	bytesWritten int64
@@ -52,24 +78,15 @@ type ResponseWriter struct {
 
 func newResponseWriter(conn net.Conn, bw *bufio.Writer) *ResponseWriter {
 	return &ResponseWriter{
-		conn:    conn,
-		bw:      bw,
-		headers: make(map[string][]string),
+		conn:   conn,
+		bw:     bw,
+		header: make(Header),
 	}
 }
 
-func (w *ResponseWriter) SetHeader(key, value string) {
-	if w.wroteHeader {
-		return // too late, headers already flushed
-	}
-	w.headers[key] = []string{value}
-}
-
-func (w *ResponseWriter) AddHeader(key, value string) {
-	if w.wroteHeader {
-		return
-	}
-	w.headers[key] = append(w.headers[key], value)
+// Header returns the header map for direct mutation before WriteHeader is called.
+func (w *ResponseWriter) Header() Header {
+	return w.header
 }
 
 // WriteHeader sends the status line + headers. Must be called at most once,
@@ -86,7 +103,7 @@ func (w *ResponseWriter) WriteHeader(code int) error {
 		return err
 	}
 
-	for key, vals := range w.headers {
+	for key, vals := range w.header {
 		for _, v := range vals {
 			if _, err := fmt.Fprintf(w.bw, "%s: %s\r\n", key, v); err != nil {
 				return err
@@ -118,8 +135,8 @@ func (w *ResponseWriter) Flush() error {
 // WriteFixedBody is the common case: known-length body, sets Content-Length
 // automatically and writes headers + body in one call.
 func (w *ResponseWriter) WriteFixedBody(code int, contentType string, body []byte) error {
-	w.SetHeader("Content-Type", contentType)
-	w.SetHeader("Content-Length", strconv.Itoa(len(body)))
+	w.header.Set("Content-Type", contentType)
+	w.header.Set("Content-Length", strconv.Itoa(len(body)))
 	if err := w.WriteHeader(code); err != nil {
 		return err
 	}

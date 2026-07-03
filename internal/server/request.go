@@ -26,15 +26,30 @@ var (
 	ErrBodyTooLarge       = errors.New("body exceeds max size")
 	ErrInvalidChunkSize   = errors.New("invalid chunk size")
 	ErrInvalidContentLen  = errors.New("invalid Content-Length")
+	ErrMissingHost        = errors.New("missing required Host header")
 )
 
 type Request struct {
 	Method     string
 	Target     string
+	Path       string
+	RawQuery   string
 	Proto      string
 	Headers    map[string][]string
 	Body       io.Reader
+	rawBody    []byte
 	RemoteAddr string
+	params     map[string]string
+}
+
+func (r *Request) Param(key string) string {
+	return r.params[key]
+}
+
+// BodyBytes returns the fully-buffered request body (populated by the
+// server loop before the handler runs — see Part 5 note on buffering).
+func (r *Request) BodyBytes() []byte {
+	return r.rawBody
 }
 
 func (r *Request) Header(key string) string {
@@ -45,7 +60,6 @@ func (r *Request) Header(key string) string {
 	return vals[0]
 }
 
-// readLine reads a single CRLF-terminated line, stripping the CRLF.
 func readLine(r *bufio.Reader, maxSize int) (string, error) {
 	line, err := r.ReadString('\n')
 	if err != nil {
@@ -76,6 +90,14 @@ func parseRequestLine(line string) (method, target, proto string, err error) {
 	return method, target, proto, nil
 }
 
+// splitTarget separates the request-target into path and raw query string.
+func splitTarget(target string) (path, rawQuery string) {
+	if idx := strings.IndexByte(target, '?'); idx >= 0 {
+		return target[:idx], target[idx+1:]
+	}
+	return target, ""
+}
+
 func parseHeaders(r *bufio.Reader) (map[string][]string, error) {
 	headers := make(map[string][]string)
 	totalSize := 0
@@ -87,7 +109,7 @@ func parseHeaders(r *bufio.Reader) (map[string][]string, error) {
 			return nil, err
 		}
 		if line == "" {
-			break // blank line = end of headers
+			break
 		}
 
 		totalSize += len(line)
@@ -109,6 +131,12 @@ func parseHeaders(r *bufio.Reader) (map[string][]string, error) {
 }
 
 func parseHeaderLine(line string) (key, val string, err error) {
+	for i := 0; i < len(line); i++ {
+		c := line[i]
+		if c < 0x20 && c != '\t' {
+			return "", "", ErrMalformedRequest
+		}
+	}
 	idx := strings.IndexByte(line, ':')
 	if idx < 0 {
 		return "", "", ErrMalformedRequest
@@ -124,8 +152,6 @@ func parseHeaderLine(line string) (key, val string, err error) {
 	return strings.ToLower(key), val, nil
 }
 
-// resolveBodyReader inspects Content-Length / Transfer-Encoding and returns
-// the correctly bounded body reader. This is the primary smuggling defense point.
 func resolveBodyReader(r *bufio.Reader, headers map[string][]string) (io.Reader, error) {
 	_, hasCL := headers["content-length"]
 	teVals, hasTE := headers["transfer-encoding"]
@@ -144,7 +170,6 @@ func resolveBodyReader(r *bufio.Reader, headers map[string][]string) (io.Reader,
 
 	if hasCL {
 		clVals := headers["content-length"]
-		// Reject multiple Content-Length headers unless all identical (smuggling defense)
 		first := clVals[0]
 		for _, v := range clVals[1:] {
 			if v != first {
@@ -164,7 +189,6 @@ func resolveBodyReader(r *bufio.Reader, headers map[string][]string) (io.Reader,
 		return io.LimitReader(r, n), nil
 	}
 
-	// No body declared
 	return http_EmptyReader{}, nil
 }
 
@@ -172,10 +196,9 @@ type http_EmptyReader struct{}
 
 func (http_EmptyReader) Read(p []byte) (int, error) { return 0, io.EOF }
 
-// chunkedReader implements io.Reader for Transfer-Encoding: chunked (RFC 7230 §4.1)
 type chunkedReader struct {
 	r         *bufio.Reader
-	remaining int64 // bytes left in current chunk
+	remaining int64
 	done      bool
 	err       error
 }
@@ -199,7 +222,6 @@ func (cr *chunkedReader) Read(p []byte) (int, error) {
 			return 0, err
 		}
 		if size == 0 {
-			// final chunk: consume trailing headers (if any) + final CRLF
 			if err := cr.consumeTrailer(); err != nil {
 				cr.err = err
 				return 0, err
@@ -223,7 +245,6 @@ func (cr *chunkedReader) Read(p []byte) (int, error) {
 	}
 
 	if cr.remaining == 0 {
-		// consume trailing CRLF after chunk data
 		if _, err := readLine(cr.r, 2); err != nil {
 			cr.err = err
 			return n, err
@@ -234,11 +255,10 @@ func (cr *chunkedReader) Read(p []byte) (int, error) {
 }
 
 func (cr *chunkedReader) readChunkSize() (int64, error) {
-	line, err := readLine(cr.r, 64) // chunk-size lines are short
+	line, err := readLine(cr.r, 64)
 	if err != nil {
 		return 0, err
 	}
-	// strip chunk extensions (";name=value") if present
 	if idx := strings.IndexByte(line, ';'); idx >= 0 {
 		line = line[:idx]
 	}
@@ -263,9 +283,8 @@ func (cr *chunkedReader) consumeTrailer() error {
 			return err
 		}
 		if line == "" {
-			return nil // end of trailer section
+			return nil
 		}
-		// trailers parsed but discarded (not exposed to handlers in this version)
 	}
 }
 
@@ -280,9 +299,21 @@ func ParseRequest(r *bufio.Reader) (*Request, error) {
 		return nil, err
 	}
 
+	path, rawQuery := splitTarget(target)
+
 	headers, err := parseHeaders(r)
 	if err != nil {
 		return nil, err
+	}
+
+	hostVals := headers["host"]
+	if proto == "HTTP/1.1" {
+		if len(hostVals) == 0 {
+			return nil, ErrMissingHost
+		}
+		if len(hostVals) > 1 {
+			return nil, ErrSmugglingAttempt // duplicate Host is a known smuggling signal
+		}
 	}
 
 	body, err := resolveBodyReader(r, headers)
@@ -291,10 +322,12 @@ func ParseRequest(r *bufio.Reader) (*Request, error) {
 	}
 
 	return &Request{
-		Method:  method,
-		Target:  target,
-		Proto:   proto,
-		Headers: headers,
-		Body:    body,
+		Method:   method,
+		Target:   target,
+		Path:     path,
+		RawQuery: rawQuery,
+		Proto:    proto,
+		Headers:  headers,
+		Body:     body,
 	}, nil
 }
