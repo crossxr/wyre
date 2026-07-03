@@ -7,6 +7,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const (
@@ -40,6 +41,47 @@ type Request struct {
 	rawBody    []byte
 	RemoteAddr string
 	params     map[string]string
+}
+
+var requestPool = sync.Pool{
+	New: func() interface{} {
+		return &Request{
+			Headers: make(map[string][]string),
+			params:  make(map[string]string),
+		}
+	},
+}
+
+func AcquireRequest() *Request {
+	return requestPool.Get().(*Request)
+}
+
+func ReleaseRequest(r *Request) {
+	r.Reset()
+	requestPool.Put(r)
+}
+
+func (r *Request) Reset() {
+	r.Method = ""
+	r.Target = ""
+	r.Path = ""
+	r.RawQuery = ""
+	r.Proto = ""
+	r.RemoteAddr = ""
+	r.Body = nil
+	
+	for k := range r.Headers {
+		delete(r.Headers, k)
+	}
+	for k := range r.params {
+		delete(r.params, k)
+	}
+	
+	if cap(r.rawBody) > 64*1024 {
+		r.rawBody = nil
+	} else {
+		r.rawBody = r.rawBody[:0]
+	}
 }
 
 func (r *Request) Param(key string) string {
@@ -289,45 +331,54 @@ func (cr *chunkedReader) consumeTrailer() error {
 }
 
 func ParseRequest(r *bufio.Reader) (*Request, error) {
+	req := AcquireRequest()
+	err := ParseRequestInto(r, req)
+	if err != nil {
+		ReleaseRequest(req)
+		return nil, err
+	}
+	return req, nil
+}
+
+func ParseRequestInto(r *bufio.Reader, req *Request) error {
 	line, err := readLine(r, maxRequestLineSize)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	method, target, proto, err := parseRequestLine(line)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	path, rawQuery := splitTarget(target)
 
 	headers, err := parseHeaders(r)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	hostVals := headers["host"]
 	if proto == "HTTP/1.1" {
 		if len(hostVals) == 0 {
-			return nil, ErrMissingHost
+			return ErrMissingHost
 		}
 		if len(hostVals) > 1 {
-			return nil, ErrSmugglingAttempt // duplicate Host is a known smuggling signal
+			return ErrSmugglingAttempt // duplicate Host is a known smuggling signal
 		}
 	}
 
 	body, err := resolveBodyReader(r, headers)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &Request{
-		Method:   method,
-		Target:   target,
-		Path:     path,
-		RawQuery: rawQuery,
-		Proto:    proto,
-		Headers:  headers,
-		Body:     body,
-	}, nil
+	req.Method = method
+	req.Target = target
+	req.Path = path
+	req.RawQuery = rawQuery
+	req.Proto = proto
+	req.Headers = headers
+	req.Body = body
+	return nil
 }

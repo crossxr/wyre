@@ -233,6 +233,7 @@ func (s *Server) handleConn(conn net.Conn) {
 			log.Printf("body read error from %s: %v", conn.RemoteAddr(), err)
 			conn.SetWriteDeadline(time.Now().Add(s.cfg.WriteTimeout))
 			WriteError(conn, 400)
+			ReleaseRequest(req)
 			return
 		}
 		req.Body = nil
@@ -262,14 +263,18 @@ func (s *Server) handleConn(conn net.Conn) {
 		if w.chunked {
 			if _, err := w.bw.WriteString("0\r\n\r\n"); err != nil {
 				log.Printf("write end chunk error: %v", err)
+				ReleaseRequest(req)
 				return
 			}
 		}
 
 		if err := w.Flush(); err != nil {
 			log.Printf("flush error to %s: %v", conn.RemoteAddr(), err)
+			ReleaseRequest(req)
 			return
 		}
+
+		ReleaseRequest(req)
 
 		if !keepAlive {
 			return
