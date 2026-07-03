@@ -2,6 +2,7 @@ package server
 
 import (
 	"bufio"
+	"io"
 	"log"
 	"net"
 )
@@ -44,5 +45,12 @@ func (s *Server) handleConn(conn net.Conn) {
 	}
 	req.RemoteAddr = conn.RemoteAddr().String()
 
-	log.Printf("%s %s %s (%d headers)", req.Method, req.Target, req.Proto, len(req.Headers))
+	bodyBytes, err := io.ReadAll(req.Body)
+	if err != nil {
+		log.Printf("body read error from %s: %v", conn.RemoteAddr(), err)
+		return
+	}
+
+	log.Printf("%s %s %s (%d headers, %d body bytes)",
+		req.Method, req.Target, req.Proto, len(req.Headers), len(bodyBytes))
 }
