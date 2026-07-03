@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"errors"
 	"io"
 	"log"
@@ -79,8 +80,43 @@ func (s *Server) ListenAndServe() error {
 
 	log.Printf("wyre listening on %s", s.cfg.Addr)
 
+	return s.serve()
+}
+
+func (s *Server) ListenAndServeTLS(certFile, keyFile string) error {
+	if s.cfg.Handler == nil {
+		s.cfg.Handler = NewRouter()
+	}
+	if s.conns == nil {
+		s.conns = make(map[net.Conn]struct{})
+	}
+	if s.cfg.MaxConnections > 0 && s.sem == nil {
+		s.sem = make(chan struct{}, s.cfg.MaxConnections)
+	}
+
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return err
+	}
+	tlsCfg := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+
+	ln, err := net.Listen("tcp", s.cfg.Addr)
+	if err != nil {
+		return err
+	}
+	s.ln = tls.NewListener(ln, tlsCfg)
+	defer s.ln.Close()
+
+	log.Printf("wyre listening on %s (TLS)", s.cfg.Addr)
+
+	return s.serve()
+}
+
+func (s *Server) serve() error {
 	for {
-		conn, err := ln.Accept()
+		conn, err := s.ln.Accept()
 		if err != nil {
 			s.mu.Lock()
 			closing := s.closing
@@ -160,7 +196,12 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 func (s *Server) handleConn(conn net.Conn) {
-	defer conn.Close()
+	var hijacked bool
+	defer func() {
+		if !hijacked {
+			conn.Close()
+		}
+	}()
 	reader := bufio.NewReader(conn)
 
 	requestCount := 0
@@ -201,7 +242,7 @@ func (s *Server) handleConn(conn net.Conn) {
 
 		conn.SetWriteDeadline(time.Now().Add(s.cfg.WriteTimeout))
 		bw := bufio.NewWriter(conn)
-		w := newResponseWriter(conn, bw)
+		w := newResponseWriter(conn, reader, bw)
 
 		if !keepAlive {
 			w.header.Set("Connection", "close")
@@ -209,9 +250,22 @@ func (s *Server) handleConn(conn net.Conn) {
 
 		s.dispatch(w, req)
 
+		if w.hijacked {
+			hijacked = true
+			return
+		}
+
 		if !w.wroteHeader {
 			w.WriteHeader(200)
 		}
+
+		if w.chunked {
+			if _, err := w.bw.WriteString("0\r\n\r\n"); err != nil {
+				log.Printf("write end chunk error: %v", err)
+				return
+			}
+		}
+
 		if err := w.Flush(); err != nil {
 			log.Printf("flush error to %s: %v", conn.RemoteAddr(), err)
 			return

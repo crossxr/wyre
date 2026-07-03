@@ -69,16 +69,20 @@ func (h Header) Del(key string) {
 // a connection can never end up with a malformed response on the wire.
 type ResponseWriter struct {
 	conn         net.Conn
+	br           *bufio.Reader
 	bw           *bufio.Writer
 	header       Header
 	statusCode   int
 	wroteHeader  bool
 	bytesWritten int64
+	chunked      bool
+	hijacked     bool
 }
 
-func newResponseWriter(conn net.Conn, bw *bufio.Writer) *ResponseWriter {
+func newResponseWriter(conn net.Conn, br *bufio.Reader, bw *bufio.Writer) *ResponseWriter {
 	return &ResponseWriter{
 		conn:   conn,
+		br:     br,
 		bw:     bw,
 		header: make(Header),
 	}
@@ -89,15 +93,43 @@ func (w *ResponseWriter) Header() Header {
 	return w.header
 }
 
+// Hijacker is the interface that allows a handler to hijack the connection.
+type Hijacker interface {
+	Hijack() (net.Conn, *bufio.ReadWriter, error)
+}
+
+func (w *ResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if w.hijacked {
+		return nil, nil, fmt.Errorf("wyre: connection already hijacked")
+	}
+	w.hijacked = true
+	rw := bufio.NewReadWriter(w.br, w.bw)
+	return w.conn, rw, nil
+}
+
 // WriteHeader sends the status line + headers. Must be called at most once,
 // before any call to Write. If not called explicitly, Write will call it
 // with 200 on first use.
 func (w *ResponseWriter) WriteHeader(code int) error {
+	if w.hijacked {
+		return fmt.Errorf("wyre: connection already hijacked")
+	}
 	if w.wroteHeader {
 		return fmt.Errorf("wyre: WriteHeader called twice")
 	}
 	w.wroteHeader = true
 	w.statusCode = code
+
+	hasCL := w.header.Get("Content-Length") != ""
+	hasTE := w.header.Get("Transfer-Encoding") != ""
+	hasBody := true
+	if code >= 100 && code < 200 || code == 204 || code == 304 {
+		hasBody = false
+	}
+	if hasBody && !hasCL && !hasTE {
+		w.header.Set("Transfer-Encoding", "chunked")
+		w.chunked = true
+	}
 
 	if _, err := fmt.Fprintf(w.bw, "HTTP/1.1 %d %s\r\n", code, StatusText(code)); err != nil {
 		return err
@@ -118,10 +150,30 @@ func (w *ResponseWriter) WriteHeader(code int) error {
 }
 
 func (w *ResponseWriter) Write(p []byte) (int, error) {
+	if w.hijacked {
+		return 0, fmt.Errorf("wyre: connection already hijacked")
+	}
+	if len(p) == 0 {
+		return 0, nil
+	}
 	if !w.wroteHeader {
 		if err := w.WriteHeader(200); err != nil {
 			return 0, err
 		}
+	}
+	if w.chunked {
+		if _, err := fmt.Fprintf(w.bw, "%x\r\n", len(p)); err != nil {
+			return 0, err
+		}
+		n, err := w.bw.Write(p)
+		if err != nil {
+			return n, err
+		}
+		if _, err := w.bw.WriteString("\r\n"); err != nil {
+			return n, err
+		}
+		w.bytesWritten += int64(n)
+		return n, nil
 	}
 	n, err := w.bw.Write(p)
 	w.bytesWritten += int64(n)
@@ -140,7 +192,7 @@ func (w *ResponseWriter) WriteFixedBody(code int, contentType string, body []byt
 	if err := w.WriteHeader(code); err != nil {
 		return err
 	}
-	_, err := w.bw.Write(body)
+	_, err := w.Write(body)
 	return err
 }
 
