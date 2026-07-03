@@ -40,7 +40,7 @@ func StatusText(code int) string {
 }
 
 // Header is a case-insensitive multi-value header map, modeled after
-// net/http.Header so handlers written against oun feel familiar.
+// net/http.Header so handlers written against wyre feel familiar.
 type Header map[string][]string
 
 func (h Header) Set(key, value string) {
@@ -94,7 +94,7 @@ func (w *ResponseWriter) Header() Header {
 // with 200 on first use.
 func (w *ResponseWriter) WriteHeader(code int) error {
 	if w.wroteHeader {
-		return fmt.Errorf("oun: WriteHeader called twice")
+		return fmt.Errorf("wyre: WriteHeader called twice")
 	}
 	w.wroteHeader = true
 	w.statusCode = code

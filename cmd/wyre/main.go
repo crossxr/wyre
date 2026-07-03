@@ -8,24 +8,24 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/crossxr/oun/internal/server"
+	"github.com/crossxr/wyre/internal/server"
 )
 
 func main() {
 	router := server.NewRouter()
 
 	router.HandleFunc("GET", "/", func(w *server.ResponseWriter, r *server.Request) {
-		w.WriteFixedBody(200, "text/plain", []byte("oun is alive\n"))
+		w.WriteFixedBody(200, "text/plain", []byte("wyre is alive\n"))
 	})
 
 	router.HandleFunc("GET", "/hello", func(w *server.ResponseWriter, r *server.Request) {
-		w.Header().Set("X-Powered-By", "oun")
-		w.WriteFixedBody(200, "text/plain", []byte("hello from oun\n"))
+		w.Header().Set("X-Powered-By", "wyre")
+		w.WriteFixedBody(200, "text/plain", []byte("hello from wyre\n"))
 	})
 
 	router.HandleFunc("GET", "/hello/:name", func(w *server.ResponseWriter, r *server.Request) {
 		name := r.Param("name")
-		w.Header().Set("X-Powered-By", "oun")
+		w.Header().Set("X-Powered-By", "wyre")
 		w.WriteFixedBody(200, "text/plain", []byte("hello "+name+"\n"))
 	})
 

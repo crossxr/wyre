@@ -77,7 +77,7 @@ func (s *Server) ListenAndServe() error {
 	s.ln = ln
 	defer ln.Close()
 
-	log.Printf("oun listening on %s", s.cfg.Addr)
+	log.Printf("wyre listening on %s", s.cfg.Addr)
 
 	for {
 		conn, err := ln.Accept()

@@ -1,10 +1,10 @@
 .PHONY: build run test clean
 
 build:
-	go build -o bin/oun ./cmd/oun
+	go build -o bin/wyre ./cmd/wyre
 
 run:
-	go run ./cmd/oun
+	go run ./cmd/wyre
 
 test:
 	go test -v ./...
