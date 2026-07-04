@@ -486,5 +486,163 @@ func TestMCPTransport(t *testing.T) {
 	}
 }
 
+func TestConcurrencyLimiter(t *testing.T) {
+	router := NewRouter()
+	limiter := ConcurrencyLimiter(1, 1, 100 * time.Millisecond)
+
+	router.Handle("GET", "/limit", limiter(HandlerFunc(func(w *ResponseWriter, r *Request) {
+		time.Sleep(50 * time.Millisecond)
+		w.WriteFixedBody(200, "text/plain", []byte("done"))
+	})))
+
+	cfg := DefaultConfig("127.0.0.1:0")
+	cfg.Handler = router
+	server := NewWithConfig(cfg)
+
+	listener, err := net.Listen("tcp", server.cfg.Addr)
+	if err != nil {
+		t.Fatalf("failed to listen: %v", err)
+	}
+	server.ln = listener
+	server.conns = make(map[net.Conn]struct{})
+	
+	go func() {
+		_ = server.serve()
+	}()
+	defer server.Shutdown(context.Background())
+	addr := listener.Addr().String()
+
+	// Helper to send request and read status line
+	sendReq := func() string {
+		conn, err := net.Dial("tcp", addr)
+		if err != nil {
+			return err.Error()
+		}
+		defer conn.Close()
+		_, _ = conn.Write([]byte("GET /limit HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"))
+		rdr := bufio.NewReader(conn)
+		line, _ := rdr.ReadString('\n')
+		return line
+	}
+
+	results := make(chan string, 3)
+	
+	// Start Request 1 (holds slot for 50ms)
+	go func() {
+		results <- sendReq()
+	}()
+	
+	// Small delay to ensure Request 1 has acquired the slot
+	time.Sleep(10 * time.Millisecond)
+
+	// Start Request 2 (should queue)
+	go func() {
+		results <- sendReq()
+	}()
+
+	// Small delay to ensure Request 2 is in queue
+	time.Sleep(10 * time.Millisecond)
+
+	// Start Request 3 (should be rejected with 429 immediately)
+	go func() {
+		results <- sendReq()
+	}()
+
+	// Wait and read responses
+	var resp1, resp2, resp3 string
+	for i := 0; i < 3; i++ {
+		resp := <-results
+		t.Logf("TestConcurrencyLimiter response %d: %q", i, resp)
+		if strings.Contains(resp, "200 OK") {
+			if resp1 == "" {
+				resp1 = resp
+			} else {
+				resp2 = resp
+			}
+		} else if strings.Contains(resp, "429 Too Many Requests") {
+			resp3 = resp
+		}
+	}
+
+	if resp1 == "" || resp2 == "" {
+		t.Errorf("expected two successful 200 OK responses, got resp1=%q, resp2=%q", resp1, resp2)
+	}
+	if resp3 == "" {
+		t.Errorf("expected one 429 Too Many Requests response for saturated queue")
+	}
+}
+
+func TestConcurrencyLimiterQueueTimeout(t *testing.T) {
+	router := NewRouter()
+	limiter := ConcurrencyLimiter(1, 1, 10 * time.Millisecond) // short timeout
+
+	router.Handle("GET", "/limit", limiter(HandlerFunc(func(w *ResponseWriter, r *Request) {
+		time.Sleep(100 * time.Millisecond)
+		w.WriteFixedBody(200, "text/plain", []byte("done"))
+	})))
+
+	cfg := DefaultConfig("127.0.0.1:0")
+	cfg.Handler = router
+	server := NewWithConfig(cfg)
+
+	listener, err := net.Listen("tcp", server.cfg.Addr)
+	if err != nil {
+		t.Fatalf("failed to listen: %v", err)
+	}
+	server.ln = listener
+	server.conns = make(map[net.Conn]struct{})
+	
+	go func() {
+		_ = server.serve()
+	}()
+	defer server.Shutdown(context.Background())
+	addr := listener.Addr().String()
+
+	sendReq := func() string {
+		conn, err := net.Dial("tcp", addr)
+		if err != nil {
+			return err.Error()
+		}
+		defer conn.Close()
+		_, _ = conn.Write([]byte("GET /limit HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"))
+		rdr := bufio.NewReader(conn)
+		line, _ := rdr.ReadString('\n')
+		return line
+	}
+
+	results := make(chan string, 2)
+
+	// Start Request 1 (holds slot for 100ms)
+	go func() {
+		results <- sendReq()
+	}()
+
+	time.Sleep(5 * time.Millisecond)
+
+	// Start Request 2 (queues, but should timeout after 10ms and return 503)
+	go func() {
+		results <- sendReq()
+	}()
+
+	var resp1, resp2 string
+	for i := 0; i < 2; i++ {
+		resp := <-results
+		t.Logf("TestConcurrencyLimiterQueueTimeout response %d: %q", i, resp)
+		if strings.Contains(resp, "200 OK") {
+			resp1 = resp
+		} else if strings.Contains(resp, "503 Service Unavailable") {
+			resp2 = resp
+		}
+	}
+
+	if resp1 == "" {
+		t.Errorf("expected first request to succeed with 200 OK")
+	}
+	if resp2 == "" {
+		t.Errorf("expected second request to fail with 503 Service Unavailable due to queue timeout")
+	}
+}
+
+
 
 

@@ -29,9 +29,11 @@ var statusText = map[int]string{
 	411: "Length Required",
 	413: "Payload Too Large",
 	414: "URI Too Long",
+	429: "Too Many Requests",
 	431: "Request Header Fields Too Large",
 	500: "Internal Server Error",
 	501: "Not Implemented",
+	503: "Service Unavailable",
 	505: "HTTP Version Not Supported",
 }
 
