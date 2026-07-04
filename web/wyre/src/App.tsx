@@ -69,21 +69,21 @@ const RouterMockup = () => (
       <span style={{ color: '#888' }}>&rarr;</span>
       <span style={{ color: '#67ffb1' }}>Match</span>
     </div>
-    
+
     {/* Node Tree Graphic */}
     <div style={{ position: 'relative', width: '280px', height: '100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       {/* Root Node */}
       <div style={{ zIndex: 2, background: '#1e1e1e', border: '1px solid #333', color: '#888', padding: '6px 12px', borderRadius: '4px', fontSize: '11px' }}>
         /
       </div>
-      
+
       {/* SVG Connecting Lines */}
       <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
         <path d="M40 50 L110 25" stroke="#333" strokeWidth="2" fill="none" />
         <path d="M40 50 L110 75" stroke="#6798ff" strokeWidth="2" strokeDasharray="4" fill="none" />
         <path d="M190 75 L240 75" stroke="#6798ff" strokeWidth="2" fill="none" />
       </svg>
-      
+
       {/* Level 1 Nodes */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', zIndex: 2 }}>
         <div style={{ background: '#1e1e1e', border: '1px solid #333', color: '#888', padding: '6px 12px', borderRadius: '4px', fontSize: '11px' }}>
@@ -93,7 +93,7 @@ const RouterMockup = () => (
           users
         </div>
       </div>
-      
+
       {/* Level 2 Parameter Node */}
       <div style={{ zIndex: 2 }}>
         <div style={{ background: 'rgba(103, 152, 255, 0.1)', border: '1px dashed #6798ff', color: '#6798ff', padding: '6px 12px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
@@ -111,7 +111,7 @@ const MemoryPoolMockup = () => (
       <span>BUFFER ALLOCATION (sync.Pool)</span>
       <span style={{ color: '#67ffb1', fontWeight: 'bold' }}>ACTIVE RECYCLING</span>
     </div>
-    
+
     {/* Progress Bar 1 */}
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
@@ -122,7 +122,7 @@ const MemoryPoolMockup = () => (
         <div style={{ width: '2%', height: '100%', background: '#ff67b1' }} />
       </div>
     </div>
-    
+
     {/* Progress Bar 2 */}
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
@@ -133,7 +133,7 @@ const MemoryPoolMockup = () => (
         <div style={{ width: '100%', height: '100%', background: '#67ffb1', boxShadow: '0 0 8px rgba(103, 255, 177, 0.3)' }} />
       </div>
     </div>
-    
+
     {/* Pool Stats Footer */}
     <div style={{ display: 'flex', gap: '16px', fontSize: '11px', borderTop: '1px solid #1e1e1e', paddingTop: '12px' }}>
       <div>
@@ -155,7 +155,7 @@ const SocketArchMockup = () => (
       <span>TCP LISTENER [SOCKET_LAYER]</span>
       <span style={{ color: '#6798ff' }}>ADDR: :8080</span>
     </div>
-    
+
     {/* Mock Console Logs */}
     <div style={{ background: '#161618', padding: '12px', borderRadius: '6px', border: '1px solid #27272a', display: 'flex', flexDirection: 'column', gap: '6px', color: '#aaa', fontSize: '10px', textAlign: 'left' }}>
       <div><span style={{ color: '#6798ff' }}>[INFO]</span> binding raw tcp listener on :8080</div>
@@ -180,7 +180,7 @@ const ConnectionHijackMockup = () => (
       <div style={{ color: '#888' }}>Upgrade: websocket</div>
       <div style={{ color: '#888' }}>Connection: Upgrade</div>
     </div>
-    
+
     {/* Flow Arrow Graphic */}
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px' }}>
       <span style={{ background: '#1e1e1e', padding: '4px 8px', borderRadius: '4px', color: '#aaa', border: '1px solid #333' }}>Wyre Router</span>
@@ -196,8 +196,73 @@ const ConnectionHijackMockup = () => (
 );
 
 export default function App() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showAlternativeLogo, setShowAlternativeLogo] = useState(false);
+  // Preloader States
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [preloaderActive, setPreloaderActive] = useState(true);
+  const [preloaderVisible, setPreloaderVisible] = useState(true);
+
   // Code Playground States
   const [activeDevTab, setActiveDevTab] = useState<'start-server' | 'middleware' | 'json-helpers'>('start-server');
+
+  // Alternating Logo Interval
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowAlternativeLogo(prev => !prev);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Preloader Increment Loop (Guaranteed 1000ms duration for progress, then smooth transition)
+  useEffect(() => {
+    let animationFrameId: number;
+    let fadeTimer: any;
+    let disableTimer: any;
+    
+    const duration = 1000; // Exact duration in ms for counter to reach 100%
+    const startTime = performance.now();
+
+    const updateProgress = () => {
+      const elapsed = performance.now() - startTime;
+      const progress = Math.min(100, Math.floor((elapsed / duration) * 100));
+      
+      setLoadingProgress(progress);
+
+      if (progress < 100) {
+        animationFrameId = requestAnimationFrame(updateProgress);
+      } else {
+        fadeTimer = setTimeout(() => {
+          setPreloaderVisible(false);
+        }, 80);
+        
+        disableTimer = setTimeout(() => {
+          setPreloaderActive(false);
+        }, 700);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(updateProgress);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      if (fadeTimer) clearTimeout(fadeTimer);
+      if (disableTimer) clearTimeout(disableTimer);
+    };
+  }, []);
+
+  // Body scroll lock effect
+  useEffect(() => {
+    if (preloaderActive) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      window.scrollTo(0, 0);
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [preloaderActive]);
 
   const getCodeSnippet = () => {
     if (activeDevTab === 'start-server') {
@@ -259,7 +324,19 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
 
   return (
     <div className="blueprint-grid" style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
-      <FlickeringGrid
+      {preloaderActive && (
+        <div className={`preloader-overlay ${!preloaderVisible ? 'fade-out' : ''}`}>
+          <div className="preloader-logo-group">
+            <div className="preloader-logo-row">
+              <img src="/logo/logo.svg" className="preloader-logo-img" alt="Wyre Logo" />
+              <span className="preloader-logo-text">wyre</span>
+            </div>
+            <div className="preloader-counter">{loadingProgress}%</div>
+          </div>
+        </div>
+      )}
+      <div className={`page-reveal-wrapper ${!preloaderVisible ? 'revealed' : ''}`}>
+        <FlickeringGrid
         squareSize={4}
         gridGap={6}
         flickerChance={0.3}
@@ -286,14 +363,18 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
       {/* Global Header */}
       <header className="header">
         <div className="container header-container">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div className="logo-container">
-              <span className="logo-spark" />
-              <span>wyre</span>
+              <div className="nav-pill" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', padding: 0, position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'relative', width: '24px', height: '24px' }}>
+                  <img src="/logo/logo.svg" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain', opacity: showAlternativeLogo ? 0 : 1, transition: 'opacity 0.8s ease-in-out' }} alt="Wyre Logo" />
+                  <img src="/logo/logomark.png" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain', opacity: showAlternativeLogo ? 1 : 0, transition: 'opacity 0.8s ease-in-out, transform 0.8s ease-in-out', transform: showAlternativeLogo ? 'scale(2)' : 'scale(1)', transformOrigin: 'center' }} alt="Wyre Logomark" />
+                </div>
+              </div>
             </div>
 
             <nav className="nav-links" style={{ gap: '8px' }}>
-              <button className="nav-pill active">Product</button>
+              <button className="nav-pill">Product</button>
               <button className="nav-pill">Solutions</button>
               <button className="nav-pill">Resources</button>
               <button className="nav-pill">Enterprise</button>
@@ -305,6 +386,37 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
           <div className="nav-cta-group" style={{ gap: '8px' }}>
             <a href="#login" className="login-link">Log in</a>
             <button className="btn-primary" style={{ backgroundColor: '#ffffff', color: '#000000', fontWeight: 600 }}>Contact sales</button>
+          </div>
+
+          <button className="mobile-menu-toggle-btn" onClick={() => setMobileMenuOpen(true)}>
+            Menu
+          </button>
+        </div>
+
+        <div className={`mobile-menu-overlay ${mobileMenuOpen ? 'open' : ''}`}>
+          <div className="mobile-menu-header">
+            <div className="logo-container">
+              <div className="nav-pill" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', padding: 0 }}>
+                <img src="/logo/logo.svg" style={{ width: '20px', height: '20px', objectFit: 'contain' }} alt="Wyre Logo" />
+              </div>
+            </div>
+            <button className="mobile-menu-close-btn" onClick={() => setMobileMenuOpen(false)}>
+              Close
+            </button>
+          </div>
+          <div className="mobile-menu-body">
+            <nav className="mobile-menu-links">
+              <a href="#product" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Product</a>
+              <a href="#solutions" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Solutions</a>
+              <a href="#resources" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Resources</a>
+              <a href="#enterprise" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Enterprise</a>
+              <a href="#customers" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Customers</a>
+              <a href="#pricing" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+            </nav>
+            <div className="mobile-menu-cta-group">
+              <a href="#login" className="mobile-menu-login-link" onClick={() => setMobileMenuOpen(false)}>Log in</a>
+              <button className="btn-primary-white" style={{ width: '100%', padding: '16px 24px' }}>Contact sales</button>
+            </div>
           </div>
         </div>
       </header>
@@ -352,8 +464,10 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
         <div className="container transform-container">
           {/* Headline */}
           <h2 className="transform-headline">
-            <span style={{ whiteSpace: 'nowrap' }}>Wyre transforms <img src="/icon-bytes.png" alt="bytes icon" className="inline-icon-img" /> <span className="pixel-word">raw socket bytes</span></span><br />
-            <span style={{ whiteSpace: 'nowrap' }}>into agent-ready streaming <img src="/icon-star.png" alt="star icon" className="inline-icon-img star-icon-img" /> pipelines</span><br />
+            <span className="responsive-nowrap">Wyre transforms <img src="/icon-bytes.png" alt="bytes icon" className="inline-icon-img" /> <span className="pixel-word">raw socket bytes </span></span>
+            <br className="desktop-only-br" />
+            <span className="responsive-nowrap">into agent-ready streaming <img src="/icon-star.png" alt="star icon" className="inline-icon-img star-icon-img" /> pipelines </span>
+            <br className="desktop-only-br" />
             automatically, across your whole distributed stack.
           </h2>
 
@@ -402,8 +516,9 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
       <section className="equip-section">
         <div className="container equip-container">
           <h2 className="equip-headline">
-            <span style={{ whiteSpace: 'nowrap' }}>Equip <img src="/icon-server.png" alt="server icon" className="equip-server-icon" /> every backend</span><br />
-            <span style={{ whiteSpace: 'nowrap' }}>with high-speed <img src="/icon-bolt.png" alt="bolt icon" className="equip-bolt-icon" /> <span className="pixel-word">streaming</span></span>
+            <span className="responsive-nowrap">Equip <img src="/icon-server.png" alt="server icon" className="equip-server-icon" /> every backend </span>
+            <br className="desktop-only-br" />
+            <span className="responsive-nowrap">with high-speed <img src="/icon-bolt.png" alt="bolt icon" className="equip-bolt-icon" /> <span className="pixel-word">streaming</span></span>
           </h2>
           <p className="equip-description">
             Go network applications suffer from framework abstraction overhead, slow reflection-based serializing, and connection drops under load. Wyre unifies raw socket performance, zero-copy streams, and robust recovery middleware into one standalone, agent-ready runtime—delivering microsecond response latencies for modern distributed applications.
@@ -821,6 +936,7 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
           </div>
         </div>
       </footer>
+      </div>
     </div>
   )
 }
