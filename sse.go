@@ -99,3 +99,23 @@ func (s *SSEStream) Send(event SSEEvent) error {
 
 	return nil
 }
+
+// WritePayload writes data as a default event to satisfy the Stream interface.
+func (s *SSEStream) WritePayload(data []byte) error {
+	return s.Send(SSEEvent{
+		Data: data,
+	})
+}
+
+// Type returns StreamSSE.
+func (s *SSEStream) Type() StreamType {
+	return StreamSSE
+}
+
+// Context returns the stream context.
+func (s *SSEStream) Context() context.Context {
+	return s.ctx
+}
+
+// Verify SSEStream satisfies Stream interface
+var _ Stream = (*SSEStream)(nil)

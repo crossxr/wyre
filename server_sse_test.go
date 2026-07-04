@@ -279,3 +279,104 @@ func TestProxyStreaming(t *testing.T) {
 	}
 }
 
+func TestUnifiedStreaming(t *testing.T) {
+	router := NewRouter()
+	
+	// Helper token stream generator that operates purely on Stream interface
+	streamTokens := func(s Stream) error {
+		return s.WritePayload([]byte("hello unified stream"))
+	}
+
+	router.HandleFunc("GET", "/chunked", func(w *ResponseWriter, r *Request) {
+		stream, err := NewChunkedStream(w, r)
+		if err != nil {
+			t.Errorf("failed to create chunked stream: %v", err)
+			return
+		}
+		if stream.Type() != StreamChunked {
+			t.Errorf("expected StreamChunked type, got %d", stream.Type())
+		}
+		_ = streamTokens(stream)
+	})
+
+	router.HandleFunc("GET", "/sse", func(w *ResponseWriter, r *Request) {
+		stream, err := NewSSEStream(w, r)
+		if err != nil {
+			t.Errorf("failed to create sse stream: %v", err)
+			return
+		}
+		if stream.Type() != StreamSSE {
+			t.Errorf("expected StreamSSE type, got %d", stream.Type())
+		}
+		_ = streamTokens(stream)
+	})
+
+	cfg := DefaultConfig("127.0.0.1:0")
+	cfg.Handler = router
+	server := NewWithConfig(cfg)
+
+	listener, err := net.Listen("tcp", server.cfg.Addr)
+	if err != nil {
+		t.Fatalf("failed to listen: %v", err)
+	}
+	server.ln = listener
+	server.conns = make(map[net.Conn]struct{})
+	
+	go func() {
+		_ = server.serve()
+	}()
+	defer server.Shutdown(context.Background())
+	addr := listener.Addr().String()
+
+	// 1. Validate Chunked Stream via Interface
+	conn1, err := net.Dial("tcp", addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _ = conn1.Write([]byte("GET /chunked HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n"))
+	r1 := bufio.NewReader(conn1)
+	
+	// skip headers
+	for {
+		line, _ := r1.ReadString('\n')
+		if line == "\r\n" {
+			break
+		}
+	}
+	// read size and content
+	sizeLine, _ := r1.ReadString('\n')
+	sz, _ := strconv.ParseInt(strings.TrimSpace(sizeLine), 16, 64)
+	chunkBytes := make([]byte, sz)
+	_, _ = io.ReadFull(r1, chunkBytes)
+	if string(chunkBytes) != "hello unified stream" {
+		t.Errorf("expected 'hello unified stream', got %q", chunkBytes)
+	}
+	conn1.Close()
+
+	// 2. Validate SSE Stream via Interface
+	conn2, err := net.Dial("tcp", addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _ = conn2.Write([]byte("GET /sse HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n"))
+	r2 := bufio.NewReader(conn2)
+	
+	// skip headers
+	for {
+		line, _ := r2.ReadString('\n')
+		if line == "\r\n" {
+			break
+		}
+	}
+	// read size and content
+	sizeLine2, _ := r2.ReadString('\n')
+	sz2, _ := strconv.ParseInt(strings.TrimSpace(sizeLine2), 16, 64)
+	chunkBytes2 := make([]byte, sz2)
+	_, _ = io.ReadFull(r2, chunkBytes2)
+	if !strings.Contains(string(chunkBytes2), "data: hello unified stream") {
+		t.Errorf("expected SSE event containing 'data: hello unified stream', got %q", chunkBytes2)
+	}
+	conn2.Close()
+}
+
+
