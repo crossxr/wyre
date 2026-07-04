@@ -70,7 +70,7 @@ export default function Home() {
   }, [preloaderActive]);
 
   return (
-    <div className="blueprint-grid" style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
+    <div className="blueprint-grid" style={{ minHeight: '100vh', position: 'relative' }}>
       <Preloader active={preloaderActive} visible={preloaderVisible} progress={loadingProgress} />
       
       <div className={`page-reveal-wrapper ${!preloaderVisible ? 'revealed' : ''}`}>

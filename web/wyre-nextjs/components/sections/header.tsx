@@ -47,6 +47,7 @@ export const Header: React.FC = () => {
         </button>
       </div>
 
+      {/* Pure CSS mobile menu - no JS animation library for max perf */}
       <div className={`mobile-menu-overlay ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="mobile-menu-header">
           <div className="logo-container">

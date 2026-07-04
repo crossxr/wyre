@@ -127,14 +127,17 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html, body {
+  overflow-x: hidden;
+}
+
 body {
-  background-color: var(--surface-canvas);
+  background-color: #000000;
   color: var(--color-bone);
   font-family: var(--font-inter);
   font-size: var(--text-body);
   line-height: var(--leading-body);
   letter-spacing: var(--tracking-body);
-  overflow-x: hidden;
 }
 
 /* Blueprint Grid Background System */
@@ -2171,15 +2174,16 @@ a:hover {
   flex-direction: column;
   padding: 0;
   opacity: 0;
-  visibility: hidden;
-  transform: translateY(-20px);
-  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
+  pointer-events: none;
+  transform: translateY(0);
+  transition: opacity 0.1s ease-out;
+  will-change: opacity;
 }
 
 .mobile-menu-overlay.open {
   opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+  pointer-events: auto;
+
 }
 
 .mobile-menu-header {
@@ -2214,14 +2218,14 @@ a:hover {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 40px 24px;
+  padding: 28px 24px;
   overflow-y: auto;
 }
 
 .mobile-menu-links {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 14px;
 }
 
 .mobile-menu-link {
