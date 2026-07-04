@@ -2,12 +2,14 @@ package wyre
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 var statusText = map[int]string{
@@ -230,3 +232,58 @@ func (w *ResponseWriter) WriteJSON(code int, v interface{}) error {
 }
 
 var _ io.Writer = (*ResponseWriter)(nil)
+
+var proxyBufferPool = sync.Pool{
+	New: func() interface{} {
+		b := make([]byte, 4096)
+		return &b
+	},
+}
+
+// ProxyStream reads from src and writes to the response directly, flushing each read chunk immediately.
+// This is optimal for piping LLM stream responses without buffering them in memory.
+func (w *ResponseWriter) ProxyStream(ctx context.Context, src io.Reader) (int64, error) {
+	if w.hijacked {
+		return 0, fmt.Errorf("wyre: connection already hijacked")
+	}
+
+	if !w.wroteHeader {
+		w.Header().Set("Content-Type", "application/octet-stream")
+		if err := w.WriteHeader(200); err != nil {
+			return 0, err
+		}
+	}
+
+	bufPtr := proxyBufferPool.Get().(*[]byte)
+	defer proxyBufferPool.Put(bufPtr)
+	buf := *bufPtr
+
+	var total int64
+	for {
+		select {
+		case <-ctx.Done():
+			return total, ctx.Err()
+		default:
+		}
+
+		n, err := src.Read(buf)
+		if n > 0 {
+			nw, writeErr := w.Write(buf[:n])
+			if writeErr != nil {
+				return total, writeErr
+			}
+			total += int64(nw)
+
+			if flushErr := w.Flush(); flushErr != nil {
+				return total, flushErr
+			}
+		}
+
+		if err != nil {
+			if err == io.EOF {
+				return total, nil
+			}
+			return total, err
+		}
+	}
+}
