@@ -59,6 +59,142 @@ const BlueLightningSvg = () => (
   </svg>
 )
 
+const RouterMockup = () => (
+  <div className="visual-mockup-router" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '20px', fontFamily: 'var(--font-jetbrains-mono)' }}>
+    {/* Route Segments Path Highlight */}
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px', background: '#161618', padding: '8px 16px', borderRadius: '6px', border: '1px solid #27272a' }}>
+      <span style={{ color: '#888' }}>GET</span>
+      <span style={{ color: '#fff' }}>/users/</span>
+      <span style={{ color: '#6798ff', fontWeight: 'bold' }}>:id</span>
+      <span style={{ color: '#888' }}>&rarr;</span>
+      <span style={{ color: '#67ffb1' }}>Match</span>
+    </div>
+    
+    {/* Node Tree Graphic */}
+    <div style={{ position: 'relative', width: '280px', height: '100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Root Node */}
+      <div style={{ zIndex: 2, background: '#1e1e1e', border: '1px solid #333', color: '#888', padding: '6px 12px', borderRadius: '4px', fontSize: '11px' }}>
+        /
+      </div>
+      
+      {/* SVG Connecting Lines */}
+      <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
+        <path d="M40 50 L110 25" stroke="#333" strokeWidth="2" fill="none" />
+        <path d="M40 50 L110 75" stroke="#6798ff" strokeWidth="2" strokeDasharray="4" fill="none" />
+        <path d="M190 75 L240 75" stroke="#6798ff" strokeWidth="2" fill="none" />
+      </svg>
+      
+      {/* Level 1 Nodes */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', zIndex: 2 }}>
+        <div style={{ background: '#1e1e1e', border: '1px solid #333', color: '#888', padding: '6px 12px', borderRadius: '4px', fontSize: '11px' }}>
+          posts
+        </div>
+        <div style={{ background: '#1e1e1e', border: '1px solid #6798ff', color: '#fff', padding: '6px 12px', borderRadius: '4px', fontSize: '11px', boxShadow: '0 0 10px rgba(103, 152, 255, 0.15)' }}>
+          users
+        </div>
+      </div>
+      
+      {/* Level 2 Parameter Node */}
+      <div style={{ zIndex: 2 }}>
+        <div style={{ background: 'rgba(103, 152, 255, 0.1)', border: '1px dashed #6798ff', color: '#6798ff', padding: '6px 12px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
+          :id (Param)
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const MemoryPoolMockup = () => (
+  <div className="visual-mockup-memory" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '20px', fontFamily: 'var(--font-jetbrains-mono)', padding: '0 24px' }}>
+    {/* Allocation Headers */}
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}>
+      <span>BUFFER ALLOCATION (sync.Pool)</span>
+      <span style={{ color: '#67ffb1', fontWeight: 'bold' }}>ACTIVE RECYCLING</span>
+    </div>
+    
+    {/* Progress Bar 1 */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+        <span style={{ color: '#aaa' }}>GC Heap Allocations</span>
+        <span style={{ color: '#ff67b1' }}>0 bytes (Zero-Alloc)</span>
+      </div>
+      <div style={{ width: '100%', height: '8px', background: '#161618', borderRadius: '4px', border: '1px solid #27272a', overflow: 'hidden' }}>
+        <div style={{ width: '2%', height: '100%', background: '#ff67b1' }} />
+      </div>
+    </div>
+    
+    {/* Progress Bar 2 */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+        <span style={{ color: '#aaa' }}>Recycled Headers & Buffers</span>
+        <span style={{ color: '#67ffb1' }}>100% Recycled</span>
+      </div>
+      <div style={{ width: '100%', height: '8px', background: '#161618', borderRadius: '4px', border: '1px solid #27272a', overflow: 'hidden' }}>
+        <div style={{ width: '100%', height: '100%', background: '#67ffb1', boxShadow: '0 0 8px rgba(103, 255, 177, 0.3)' }} />
+      </div>
+    </div>
+    
+    {/* Pool Stats Footer */}
+    <div style={{ display: 'flex', gap: '16px', fontSize: '11px', borderTop: '1px solid #1e1e1e', paddingTop: '12px' }}>
+      <div>
+        <span style={{ color: '#888', display: 'block' }}>POOL SIZE</span>
+        <span style={{ color: '#fff', fontWeight: 'bold' }}>4,096 Items</span>
+      </div>
+      <div>
+        <span style={{ color: '#888', display: 'block' }}>RECYCLE LATENCY</span>
+        <span style={{ color: '#fff', fontWeight: 'bold' }}>&lt; 5ns</span>
+      </div>
+    </div>
+  </div>
+);
+
+const SocketArchMockup = () => (
+  <div className="visual-mockup-socket" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '12px', fontFamily: 'var(--font-jetbrains-mono)', padding: '0 24px', fontSize: '11px' }}>
+    {/* Connection Monitor Headers */}
+    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#888', borderBottom: '1px solid #1e1e1e', paddingBottom: '8px' }}>
+      <span>TCP LISTENER [SOCKET_LAYER]</span>
+      <span style={{ color: '#6798ff' }}>ADDR: :8080</span>
+    </div>
+    
+    {/* Mock Console Logs */}
+    <div style={{ background: '#161618', padding: '12px', borderRadius: '6px', border: '1px solid #27272a', display: 'flex', flexDirection: 'column', gap: '6px', color: '#aaa', fontSize: '10px', textAlign: 'left' }}>
+      <div><span style={{ color: '#6798ff' }}>[INFO]</span> binding raw tcp listener on :8080</div>
+      <div><span style={{ color: '#67ffb1' }}>[CONN]</span> accepted remote_addr: 192.168.1.42:50422</div>
+      <div><span style={{ color: '#67ffb1' }}>[CONN]</span> dispatching tcp stream to serve()</div>
+      <div style={{ color: '#ffb167' }}><span style={{ color: '#6798ff' }}>[SHUT]</span> listener closed, waiting for draining...</div>
+    </div>
+
+    {/* Connection limits status */}
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
+      <span style={{ color: '#888' }}>CONCURRENT LIMIT: 10,000</span>
+      <span style={{ color: '#67ffb1' }}>GRACEFUL SHUTDOWN: READY</span>
+    </div>
+  </div>
+);
+
+const ConnectionHijackMockup = () => (
+  <div className="visual-mockup-hijack" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '16px', fontFamily: 'var(--font-jetbrains-mono)', padding: '0 24px', fontSize: '11px' }}>
+    {/* Protocol Handshake headers */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: '#161618', padding: '10px 14px', borderRadius: '6px', border: '1px solid #27272a', textAlign: 'left' }}>
+      <div style={{ color: '#6798ff', fontWeight: 'bold' }}>HTTP/1.1 101 Switching Protocols</div>
+      <div style={{ color: '#888' }}>Upgrade: websocket</div>
+      <div style={{ color: '#888' }}>Connection: Upgrade</div>
+    </div>
+    
+    {/* Flow Arrow Graphic */}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px' }}>
+      <span style={{ background: '#1e1e1e', padding: '4px 8px', borderRadius: '4px', color: '#aaa', border: '1px solid #333' }}>Wyre Router</span>
+      <span style={{ color: '#67ffb1', fontWeight: 'bold', fontSize: '12px' }}>&mdash;&mdash; Hijack() &mdash;&rarr;</span>
+      <span style={{ background: 'rgba(103, 255, 177, 0.1)', padding: '4px 8px', borderRadius: '4px', color: '#67ffb1', border: '1px dashed #67ffb1' }}>Raw TCP Conn</span>
+    </div>
+
+    {/* Message below */}
+    <div style={{ color: '#888', fontSize: '10px', textAlign: 'center' }}>
+      Thread ownership handed over to custom protocol daemon
+    </div>
+  </div>
+);
+
 export default function App() {
   // Code Playground States
   const [activeDevTab, setActiveDevTab] = useState<'start-server' | 'middleware' | 'json-helpers'>('start-server');
@@ -217,7 +353,8 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
           {/* Headline */}
           <h2 className="transform-headline">
             <span style={{ whiteSpace: 'nowrap' }}>Wyre transforms <img src="/icon-bytes.png" alt="bytes icon" className="inline-icon-img" /> <span className="pixel-word">raw socket bytes</span></span><br />
-            into agent-ready streaming <img src="/icon-star.png" alt="star icon" className="inline-icon-img star-icon-img" /> pipelines automatically, across your whole distributed stack.
+            <span style={{ whiteSpace: 'nowrap' }}>into agent-ready streaming <img src="/icon-star.png" alt="star icon" className="inline-icon-img star-icon-img" /> pipelines</span><br />
+            automatically, across your whole distributed stack.
           </h2>
 
           {/* Stats Row */}
@@ -278,61 +415,100 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
         </div>
       </section>
 
-      {/* Features Grid Section */}
+      {/* Features Section (Analyze 02 Layout style) */}
       <section className="features-section">
-        <div className="container">
-          <div className="section-header">
-            <span className="eyebrow section-eyebrow">Engine Spec</span>
-            <h2 className="heading-lg section-title">Zero-dependency, high-speed sockets.</h2>
-            <p className="body-text">
-              Wyre handles low-level server operations directly on the operating system socket layer without relying on standard frameworks or slow helpers.
-            </p>
+        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
+          <div className="features-header-layout">
+            <div>
+              <h2 className="section-headline-superscript">
+                Core<span className="superscript">01</span>
+              </h2>
+              <h3 className="features-subtitle">Low-level TCP engine built for speed</h3>
+              <p className="features-desc">
+                Wyre compiles directly against the raw Go runtime to process network connections directly on the OS socket layer. By bypassing slow wrappers and standard HTTP daemons, it achieves microsecond route dispatch latencies.
+              </p>
+              <div className="features-ctas">
+                <button className="btn-primary-white">Contact sales</button>
+                <button className="btn-secondary-dark">Try Wyre free</button>
+              </div>
+            </div>
           </div>
 
-          <div className="features-grid">
-            {/* Feature 1 */}
-            <div className="card feature-card">
-              <div className="feature-icon-wrapper">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
+          <div className="premium-features-grid">
+            {/* Feature 1: Prefix Trie Router */}
+            <div className="premium-feature-card card-short">
+              <div className="premium-feature-visual-wrapper">
+                <img src="/features/prefix_router.png" alt="Prefix Trie Router Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
               </div>
-              <div className="feature-title-block">
-                <h3 className="heading-sm">High-Speed Trie Router</h3>
+              <div className="premium-feature-content">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                  <i className="hn hn-merge" style={{ color: '#0044ff', fontSize: '24px', flexShrink: 0 }}></i>
+                  <h4 className="premium-feature-title" style={{ margin: 0 }}>Prefix Trie Router</h4>
+                </div>
+                <p className="premium-feature-description">
+                  Dynamic segment-based prefix tree routing in [router.go](file:///c:/projects/oun/router.go). It matches requests in $O(L)$ time based on path segments rather than route count, and supports backtracking and URL parameters.
+                </p>
+                <a href="#prefix-trie-router" className="feature-learn-more">
+                  Learn more <span className="arrow">&rarr;</span>
+                </a>
               </div>
-              <p className="body-sm">
-                Deterministic $O(L)$ prefix route mapping with wildcards, parameters, backtracking, and explicit routing hierarchy for zero-magic routing logic.
-              </p>
             </div>
 
-            {/* Feature 2 */}
-            <div className="card feature-card">
-              <div className="feature-icon-wrapper">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
+            {/* Feature 2: Memory Recycling Pool */}
+            <div className="premium-feature-card card-tall">
+              <div className="premium-feature-visual-wrapper">
+                <img src="/features/memory_recycling.png" alt="Memory Recycling Pool Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
               </div>
-              <div className="feature-title-block">
-                <h3 className="heading-sm">Automatic Request Pooling</h3>
+              <div className="premium-feature-content">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                  <i className="hn hn-refresh-solid" style={{ color: '#0044ff', fontSize: '24px', flexShrink: 0 }}></i>
+                  <h4 className="premium-feature-title" style={{ margin: 0 }}>Memory Recycling Pool</h4>
+                </div>
+                <p className="premium-feature-description">
+                  Recycles header slices, requests, and connection buffers through Go `sync.Pool` allocations in [request.go](file:///c:/projects/oun/request.go) and [server.go](file:///c:/projects/oun/server.go). Prevents garbage collection overhead, achieving near-zero heap memory allocations.
+                </p>
+                <a href="#memory-recycling-pool" className="feature-learn-more">
+                  Learn more <span className="arrow">&rarr;</span>
+                </a>
               </div>
-              <p className="body-sm">
-                Integrates `sync.Pool` memory allocation recycling for request header lists, minimizing GC pressure and allocating near-zero heap memory.
-              </p>
             </div>
 
-            {/* Feature 3 */}
-            <div className="card feature-card">
-              <div className="feature-icon-wrapper">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M2 12h20M12 2v20" />
-                </svg>
+            {/* Feature 3: Raw Socket Architecture */}
+            <div className="premium-feature-card card-tall">
+              <div className="premium-feature-visual-wrapper">
+                <img src="/features/socket_architcture.png" alt="Raw Socket Architecture Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
               </div>
-              <div className="feature-title-block">
-                <h3 className="heading-sm">Connection Hijacking</h3>
+              <div className="premium-feature-content">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                  <i className="hn hn-sitemap" style={{ color: '#0044ff', fontSize: '24px', flexShrink: 0 }}></i>
+                  <h4 className="premium-feature-title" style={{ margin: 0 }}>Raw Socket Architecture</h4>
+                </div>
+                <p className="premium-feature-description">
+                  TCP streams accepted and handled directly on the operating system socket layer in [server.go](file:///c:/projects/oun/server.go). Uses low-level connection pooling and timeouts without wrapping Go net/http libraries.
+                </p>
+                <a href="#raw-socket-architecture" className="feature-learn-more">
+                  Learn more <span className="arrow">&rarr;</span>
+                </a>
               </div>
-              <p className="body-sm">
-                Full socket hand-off support via standard `Hijack()` method. Handlers can take complete ownership of connections for raw protocols or WebSockets.
-              </p>
+            </div>
+
+            {/* Feature 4: Connection Hijacking */}
+            <div className="premium-feature-card card-short">
+              <div className="premium-feature-visual-wrapper">
+                <img src="/features/hijacking.png" alt="Connection Hijacking Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              </div>
+              <div className="premium-feature-content">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                  <i className="hn hn-chart-network-solid" style={{ color: '#0044ff', fontSize: '24px', flexShrink: 0 }}></i>
+                  <h4 className="premium-feature-title" style={{ margin: 0 }}>Connection Hijacking</h4>
+                </div>
+                <p className="premium-feature-description">
+                  Enables hand-off of raw socket descriptors from HTTP parser handlers to down-stream protocols like WebSockets via the custom `Hijack()` method. Handlers take 100% control of the active connection read/write streams.
+                </p>
+                <a href="#connection-hijacking" className="feature-learn-more">
+                  Learn more <span className="arrow">&rarr;</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>
