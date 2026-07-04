@@ -415,7 +415,7 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
         </div>
       </section>
 
-      {/* Features Section (Analyze 02 Layout style) */}
+      {/* Core Section (Analyze 02 Layout style) */}
       <section className="features-section">
         <div className="container" style={{ position: 'relative', zIndex: 2 }}>
           <div className="features-header-layout">
@@ -434,7 +434,7 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
             </div>
           </div>
 
-          <div className="premium-features-grid">
+          <div className="premium-features-grid core-grid">
             {/* Feature 1: Prefix Trie Router */}
             <div className="premium-feature-card card-short">
               <div className="premium-feature-visual-wrapper">
@@ -446,7 +446,7 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
                   <h4 className="premium-feature-title" style={{ margin: 0 }}>Prefix Trie Router</h4>
                 </div>
                 <p className="premium-feature-description">
-                  Dynamic segment-based prefix tree routing in [router.go](file:///c:/projects/oun/router.go). It matches requests in $O(L)$ time based on path segments rather than route count, and supports backtracking and URL parameters.
+                  Dynamic segment-based prefix tree routing. It matches requests in $O(L)$ time based on path segments rather than route count, and supports backtracking and URL parameters.
                 </p>
                 <a href="#prefix-trie-router" className="feature-learn-more">
                   Learn more <span className="arrow">&rarr;</span>
@@ -465,7 +465,7 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
                   <h4 className="premium-feature-title" style={{ margin: 0 }}>Memory Recycling Pool</h4>
                 </div>
                 <p className="premium-feature-description">
-                  Recycles header slices, requests, and connection buffers through Go `sync.Pool` allocations in [request.go](file:///c:/projects/oun/request.go) and [server.go](file:///c:/projects/oun/server.go). Prevents garbage collection overhead, achieving near-zero heap memory allocations.
+                  Recycles header slices, requests, and connection buffers through Go `sync.Pool` allocations. Prevents garbage collection overhead, achieving near-zero heap memory allocations.
                 </p>
                 <a href="#memory-recycling-pool" className="feature-learn-more">
                   Learn more <span className="arrow">&rarr;</span>
@@ -484,7 +484,7 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
                   <h4 className="premium-feature-title" style={{ margin: 0 }}>Raw Socket Architecture</h4>
                 </div>
                 <p className="premium-feature-description">
-                  TCP streams accepted and handled directly on the operating system socket layer in [server.go](file:///c:/projects/oun/server.go). Uses low-level connection pooling and timeouts without wrapping Go net/http libraries.
+                  TCP streams accepted and handled directly on the operating system socket layer. Uses low-level connection pooling and timeouts without wrapping Go net/http libraries.
                 </p>
                 <a href="#raw-socket-architecture" className="feature-learn-more">
                   Learn more <span className="arrow">&rarr;</span>
@@ -506,6 +506,181 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
                   Enables hand-off of raw socket descriptors from HTTP parser handlers to down-stream protocols like WebSockets via the custom `Hijack()` method. Handlers take 100% control of the active connection read/write streams.
                 </p>
                 <a href="#connection-hijacking" className="feature-learn-more">
+                  Learn more <span className="arrow">&rarr;</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Streaming Section (Analyze 02 Layout style) */}
+      <section className="features-section" style={{ borderTop: 'none' }}>
+        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
+          <div className="features-header-layout">
+            <div>
+              <h2 className="section-headline-superscript">
+                Stream<span className="superscript">02</span>
+              </h2>
+              <h3 className="features-subtitle">Equip every backend with high-speed streaming</h3>
+              <p className="features-desc">
+                Go network applications suffer from framework abstraction overhead, slow reflection-based serializing, and connection drops under load. Wyre unifies raw socket performance, zero-copy streams, and robust recovery middleware into one standalone, agent-ready runtime—delivering microsecond response latencies for modern distributed applications.
+              </p>
+              <div className="features-ctas">
+                <button className="btn-primary-white">Contact sales</button>
+                <button className="btn-secondary-dark">Try Wyre free</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="premium-features-grid streaming-features-grid">
+            {/* Feature 1: SSE with Backpressure */}
+            <div className="premium-feature-card card-tall">
+              <div className="premium-feature-visual-wrapper">
+                <img src="/features/sse_backpressure.png" alt="SSE with Backpressure Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              </div>
+              <div className="premium-feature-content">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                  <i className="hn hn-rss" style={{ color: '#0044ff', fontSize: '24px', flexShrink: 0 }}></i>
+                  <h4 className="premium-feature-title" style={{ margin: 0 }}>SSE with Backpressure</h4>
+                </div>
+                <p className="premium-feature-description">
+                  Native Server-Sent Events implementation. Token-stream support that won't balloon memory on slow clients.
+                </p>
+                <a href="#sse-with-backpressure" className="feature-learn-more">
+                  Learn more <span className="arrow">&rarr;</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Feature 2: Unified Streaming Abstraction */}
+            <div className="premium-feature-card card-tall">
+              <div className="premium-feature-visual-wrapper">
+                <img src="/features/unified_streming.png" alt="Unified Streaming Abstraction Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              </div>
+              <div className="premium-feature-content">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                  <i className="hn hn-sitemap" style={{ color: '#0044ff', fontSize: '24px', flexShrink: 0 }}></i>
+                  <h4 className="premium-feature-title" style={{ margin: 0 }}>Unified Streaming Abstraction</h4>
+                </div>
+                <p className="premium-feature-description">
+                  One model across Server-Sent Events, HTTP chunked transfer-encoding, and hijacked TCP connections.
+                </p>
+                <a href="#unified-stream-abstraction" className="feature-learn-more">
+                  Learn more <span className="arrow">&rarr;</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Feature 3: MCP Streamable HTTP Transport */}
+            <div className="premium-feature-card card-tall">
+              <div className="premium-feature-visual-wrapper">
+                <img src="/features/mcp_transport.png" alt="MCP Streamable Transport Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              </div>
+              <div className="premium-feature-content">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                  <i className="hn hn-open-ai" style={{ color: '#0044ff', fontSize: '24px', flexShrink: 0 }}></i>
+                  <h4 className="premium-feature-title" style={{ margin: 0 }}>MCP Streamable Transport</h4>
+                </div>
+                <p className="premium-feature-description">
+                  Model Context Protocol HTTP SSE server transport. Native JSON-RPC framing and session handling for MCP servers.
+                </p>
+                <a href="#mcp-http-transport" className="feature-learn-more">
+                  Learn more <span className="arrow">&rarr;</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Feature 4: Per-Route Concurrency Limiters */}
+            <div className="premium-feature-card card-short">
+              <div className="premium-feature-visual-wrapper">
+                <img src="/features/route_limiter.png" alt="Per-Route Concurrency Limiters Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              </div>
+              <div className="premium-feature-content">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                  <i className="hn hn-chart-network-solid" style={{ color: '#0044ff', fontSize: '24px', flexShrink: 0 }}></i>
+                  <h4 className="premium-feature-title" style={{ margin: 0 }}>Per-Route Concurrency Limiters</h4>
+                </div>
+                <p className="premium-feature-description">
+                  Built-in middleware to throttle and queue request bursts. Controls highly parallel, resource-heavy tool-call traffic.
+                </p>
+                <a href="#concurrency-controls" className="feature-learn-more">
+                  Learn more <span className="arrow">&rarr;</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Feature 5: Adaptive Load Shedding */}
+            <div className="premium-feature-card card-short">
+              <div className="premium-feature-visual-wrapper">
+                <img src="/features/adaptive_load.png" alt="Adaptive Load Shedding Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              </div>
+              <div className="premium-feature-content">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                  <i className="hn hn-refresh-solid" style={{ color: '#0044ff', fontSize: '24px', flexShrink: 0 }}></i>
+                  <h4 className="premium-feature-title" style={{ margin: 0 }}>Adaptive Load Shedding</h4>
+                </div>
+                <p className="premium-feature-description">
+                  degrade gracefully under burst instead of dropping connections. Automatically drops non-critical requests to preserve active streams.
+                </p>
+                <a href="#adaptive-load-shedding" className="feature-learn-more">
+                  Learn more <span className="arrow">&rarr;</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Feature 6: Idempotency-Key Middleware */}
+            <div className="premium-feature-card card-tall">
+              <div className="premium-feature-visual-wrapper">
+                <img src="/features/idempotency.png" alt="Idempotency-Key Middleware Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              </div>
+              <div className="premium-feature-content">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                  <i className="hn hn-merge-solid" style={{ color: '#0044ff', fontSize: '24px', flexShrink: 0 }}></i>
+                  <h4 className="premium-feature-title" style={{ margin: 0 }}>Idempotency-Key Middleware</h4>
+                </div>
+                <p className="premium-feature-description">
+                  Safe execution wrapper for tool calls. Guard against aggressive agent retries or flaky connections without duplicate state transitions.
+                </p>
+                <a href="#idempotency-key" className="feature-learn-more">
+                  Learn more <span className="arrow">&rarr;</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Feature 7: Circuit Breakers & Retries */}
+            <div className="premium-feature-card card-tall">
+              <div className="premium-feature-visual-wrapper">
+                <img src="/features/circuit-breaker.png" alt="Circuit Breakers & Retries Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              </div>
+              <div className="premium-feature-content">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                  <i className="hn hn-viewblocks" style={{ color: '#0044ff', fontSize: '24px', flexShrink: 0 }}></i>
+                  <h4 className="premium-feature-title" style={{ margin: 0 }}>Circuit Breakers & Retries</h4>
+                </div>
+                <p className="premium-feature-description">
+                  Resilience models for outbound LLM and tool connections. Protects backend services with automatic exponential backoff and connection pooling.
+                </p>
+                <a href="#circuit-breakers" className="feature-learn-more">
+                  Learn more <span className="arrow">&rarr;</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Feature 8: Agent-Aware Tracing */}
+            <div className="premium-feature-card card-short">
+              <div className="premium-feature-visual-wrapper">
+                <img src="/features/agent-tracing.png" alt="Agent-Aware Tracing Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              </div>
+              <div className="premium-feature-content">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                  <i className="hn hn-mistral" style={{ color: '#0044ff', fontSize: '24px', flexShrink: 0 }}></i>
+                  <h4 className="premium-feature-title" style={{ margin: 0 }}>Agent-Aware Tracing</h4>
+                </div>
+                <p className="premium-feature-description">
+                  Correlation IDs across multi-hop tool chains. Allows real-time inspection of active planning loops and distributed message flows.
+                </p>
+                <a href="#agent-tracing" className="feature-learn-more">
                   Learn more <span className="arrow">&rarr;</span>
                 </a>
               </div>
