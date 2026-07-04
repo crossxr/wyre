@@ -18,7 +18,7 @@ const PixelUpArrow = () => (
   </svg>
 )
 
-const EnterKeycapSvg = () => (
+export const EnterKeycapSvg = () => (
   <svg
     className="inline-icon-img"
     viewBox="0 0 24 24"
@@ -41,7 +41,7 @@ const EnterKeycapSvg = () => (
   </svg>
 )
 
-const BlueLightningSvg = () => (
+export const BlueLightningSvg = () => (
   <svg
     viewBox="0 0 24 24"
     fill="currentColor"
@@ -59,7 +59,7 @@ const BlueLightningSvg = () => (
   </svg>
 )
 
-const RouterMockup = () => (
+export const RouterMockup = () => (
   <div className="visual-mockup-router" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '20px', fontFamily: 'var(--font-jetbrains-mono)' }}>
     {/* Route Segments Path Highlight */}
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px', background: '#161618', padding: '8px 16px', borderRadius: '6px', border: '1px solid #27272a' }}>
@@ -104,7 +104,7 @@ const RouterMockup = () => (
   </div>
 );
 
-const MemoryPoolMockup = () => (
+export const MemoryPoolMockup = () => (
   <div className="visual-mockup-memory" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '20px', fontFamily: 'var(--font-jetbrains-mono)', padding: '0 24px' }}>
     {/* Allocation Headers */}
     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}>
@@ -148,7 +148,7 @@ const MemoryPoolMockup = () => (
   </div>
 );
 
-const SocketArchMockup = () => (
+export const SocketArchMockup = () => (
   <div className="visual-mockup-socket" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '12px', fontFamily: 'var(--font-jetbrains-mono)', padding: '0 24px', fontSize: '11px' }}>
     {/* Connection Monitor Headers */}
     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#888', borderBottom: '1px solid #1e1e1e', paddingBottom: '8px' }}>
@@ -172,7 +172,7 @@ const SocketArchMockup = () => (
   </div>
 );
 
-const ConnectionHijackMockup = () => (
+export const ConnectionHijackMockup = () => (
   <div className="visual-mockup-hijack" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '16px', fontFamily: 'var(--font-jetbrains-mono)', padding: '0 24px', fontSize: '11px' }}>
     {/* Protocol Handshake headers */}
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: '#161618', padding: '10px 14px', borderRadius: '6px', border: '1px solid #27272a', textAlign: 'left' }}>
