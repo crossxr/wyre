@@ -3,13 +3,13 @@ import { FlickeringGrid } from "@/components/ui/flickering-grid"
 
 
 const PixelUpArrow = () => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="24" 
-    height="29" 
-    fill="none" 
-    viewBox="0 0 32 39" 
-    aria-hidden="true" 
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="29"
+    fill="none"
+    viewBox="0 0 32 39"
+    aria-hidden="true"
     style={{ marginRight: '6px', flexShrink: 0, display: 'inline-block', verticalAlign: 'middle', transform: 'translateY(-2px)' }}
   >
     <path fill="#0044FF" d="M19.2 0v6.4h-6.4V0zM19.2 6.4v6.4h-6.4V6.4zM25.6 6.4v6.4h-6.4V6.4zM32 12.8v6.4h-6.4v-6.4z"></path>
@@ -18,177 +18,50 @@ const PixelUpArrow = () => (
   </svg>
 )
 
+const EnterKeycapSvg = () => (
+  <svg
+    className="inline-icon-img"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    style={{
+      width: '76px',
+      height: '76px',
+      display: 'inline-block',
+      verticalAlign: 'middle',
+      margin: '0 8px 0 8px',
+      transform: 'translateY(-4px)'
+    }}
+  >
+    <rect x="2" y="2" width="20" height="20" rx="3" fill="#ffffff" stroke="#e4e4e7" strokeWidth="2" />
+    <rect x="4" y="4" width="16" height="13" rx="2" fill="#f4f4f5" />
+    <text x="12" y="12" fill="#71717a" fontSize="5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">ENTER</text>
+    <path d="M16 14h-6v-3" stroke="#71717a" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+const BlueLightningSvg = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    style={{
+      color: '#2979ff',
+      width: '64px',
+      height: '64px',
+      display: 'inline-block',
+      verticalAlign: 'middle',
+      margin: '0 6px 0 6px',
+      transform: 'translateY(-4px)'
+    }}
+  >
+    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+  </svg>
+)
+
 export default function App() {
-  // Simulator States
-  const [method, setMethod] = useState<'GET' | 'POST'>('GET');
-  const [path, setPath] = useState<'/' | '/hello/:name' | '/json' | '/panic'>('/');
-  const [paramName, setParamName] = useState<string>('agent-antigravity');
-  const [jsonName, setJsonName] = useState<string>('wyre');
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-
-  // Terminal & Response output states
-  const [clientRequest, setClientRequest] = useState<string>('');
-  const [serverLog, setServerLog] = useState<string>('');
-  const [serverResponse, setServerResponse] = useState<string>('');
-
-  // Chart data state
-  const [chartData, setChartData] = useState<ChartBarData[]>([
-    { label: '08:00', height: 40, colorClass: 'bar-indigo' },
-    { label: '10:00', height: 65, colorClass: 'bar-magenta' },
-    { label: '12:00', height: 85, colorClass: 'bar-orange' },
-    { label: '14:00', height: 50, colorClass: 'bar-green' },
-    { label: '16:00', height: 35, colorClass: 'bar-indigo' },
-    { label: '18:00', height: 75, colorClass: 'bar-magenta' },
-    { label: '20:00', height: 90, colorClass: 'bar-orange' },
-    { label: '22:00', height: 60, colorClass: 'bar-green' },
-  ]);
-
   // Code Playground States
   const [activeDevTab, setActiveDevTab] = useState<'start-server' | 'middleware' | 'json-helpers'>('start-server');
-
-  // Sync request parameters on tab changes
-  useEffect(() => {
-    if (path === '/') {
-      setMethod('GET');
-    } else if (path === '/hello/:name') {
-      setMethod('GET');
-    } else if (path === '/json') {
-      setMethod('POST');
-    } else if (path === '/panic') {
-      setMethod('GET');
-    }
-  }, [path]);
-
-  // Handle mock execution
-  const handleExecuteRequest = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isProcessing) return;
-
-    setIsProcessing(true);
-
-    // 1. Generate Request Bytes
-    let reqPath = path as string;
-    let reqBody = '';
-    if (path === '/hello/:name') {
-      reqPath = `/hello/${paramName}`;
-    } else if (path === '/json') {
-      reqBody = JSON.stringify({ name: jsonName });
-    }
-
-    const reqLines = [
-      `${method} ${reqPath} HTTP/1.1`,
-      `Host: localhost:8080`,
-      `User-Agent: wyre-client/1.0`,
-      `Accept: */*`,
-    ];
-    if (reqBody) {
-      reqLines.push(`Content-Type: application/json`);
-      reqLines.push(`Content-Length: ${reqBody.length}`);
-      reqLines.push(``);
-      reqLines.push(reqBody);
-    } else {
-      reqLines.push(``);
-    }
-    setClientRequest(reqLines.join('\n'));
-
-    // 2. Animate Server Processing
-    setServerLog('Connecting to 127.0.0.1:8080...\n[wyre] Accepted connection.');
-    setServerResponse('Waiting for response...');
-
-    setTimeout(() => {
-      // Server Logs
-      const timeStr = new Date().toTimeString().split(' ')[0];
-      const logLines = [
-        `[wyre] ${timeStr} - Accepted connection from 127.0.0.1:58432`,
-      ];
-
-      if (path === '/') {
-        logLines.push(`[wyre] ${timeStr} - GET / (matched static route)`);
-      } else if (path === '/hello/:name') {
-        logLines.push(`[wyre] ${timeStr} - GET /hello/:name (matched param: name="${paramName}")`);
-      } else if (path === '/json') {
-        logLines.push(`[wyre] ${timeStr} - POST /json (matched static route)`);
-        logLines.push(`[wyre] ${timeStr} - ReadJSON: decoded name="${jsonName}"`);
-      } else if (path === '/panic') {
-        logLines.push(`[wyre] ${timeStr} - GET /panic (matched static route)`);
-        logLines.push(`[wyre] ${timeStr} - PANIC recovered in handler: something went wrong`);
-      }
-      setServerLog(logLines.join('\n'));
-
-      // Response bytes
-      let status = '200 OK';
-      let contentType = 'text/plain';
-      let resHeaders: string[] = [];
-      let resBody = '';
-
-      if (path === '/') {
-        resBody = 'wyre is alive\n';
-        resHeaders = [
-          `Content-Type: ${contentType}`,
-          `Content-Length: ${resBody.length}`,
-        ];
-      } else if (path === '/hello/:name') {
-        resBody = `hello ${paramName}\n`;
-        resHeaders = [
-          `Content-Type: ${contentType}`,
-          `Transfer-Encoding: chunked`,
-          `X-Powered-By: wyre`,
-        ];
-      } else if (path === '/json') {
-        contentType = 'application/json';
-        resBody = JSON.stringify({ greeting: `hello ${jsonName}` });
-        resHeaders = [
-          `Content-Type: ${contentType}`,
-          `Content-Length: ${resBody.length}`,
-        ];
-        status = '201 Created';
-      } else if (path === '/panic') {
-        resBody = 'Internal Server Error';
-        resHeaders = [
-          `Content-Type: ${contentType}`,
-          `Content-Length: ${resBody.length}`,
-          `Connection: close`,
-        ];
-        status = '500 Internal Server Error';
-      }
-
-      const dateStr = new Date().toUTCString();
-      const respLines = [
-        `HTTP/1.1 ${status}`,
-        `Date: ${dateStr}`,
-        `Server: wyre`,
-        ...resHeaders,
-        ``,
-      ];
-
-      // Formulate body representation
-      if (resHeaders.some(h => h.includes('chunked'))) {
-        // format as chunks
-        const chunks = [
-          `${resBody.length.toString(16)}`,
-          `${resBody.trim()}`,
-          `0`,
-          ``,
-          ``,
-        ];
-        respLines.push(chunks.join('\r\n'));
-      } else {
-        respLines.push(resBody);
-      }
-
-      setServerResponse(respLines.join('\n'));
-
-      // Boost analytics bar height
-      setChartData(prev =>
-        prev.map(bar => ({
-          ...bar,
-          height: Math.min(100, bar.height + Math.floor(Math.random() * 12)),
-        }))
-      );
-
-      setIsProcessing(false);
-    }, 1000);
-  };
 
   const getCodeSnippet = () => {
     if (activeDevTab === 'start-server') {
@@ -250,7 +123,7 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
 
   return (
     <div className="blueprint-grid" style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
-      <FlickeringGrid 
+      <FlickeringGrid
         squareSize={4}
         gridGap={6}
         flickerChance={0.3}
@@ -343,7 +216,8 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
         <div className="container transform-container">
           {/* Headline */}
           <h2 className="transform-headline">
-            Wyre transforms <img src="/icon-bytes.png" alt="bytes icon" className="inline-icon-img" /> <span className="pixel-word">raw socket bytes</span> into agent-ready <img src="/icon-star.png" alt="star icon" className="inline-icon-img star-icon-img" /> streaming pipelines automatically, across your whole distributed stack.
+            <span style={{ whiteSpace: 'nowrap' }}>Wyre transforms <img src="/icon-bytes.png" alt="bytes icon" className="inline-icon-img" /> <span className="pixel-word">raw socket bytes</span></span><br />
+            into agent-ready streaming <img src="/icon-star.png" alt="star icon" className="inline-icon-img star-icon-img" /> pipelines automatically, across your whole distributed stack.
           </h2>
 
           {/* Stats Row */}
@@ -383,6 +257,23 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
                 Graceful connection draining, hot config reload, and pluggable CRDT rate limiters guarantee absolute high availability under heavy burst load.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Equip every backend section */}
+      <section className="equip-section">
+        <div className="container equip-container">
+          <h2 className="equip-headline">
+            <span style={{ whiteSpace: 'nowrap' }}>Equip <img src="/icon-server.png" alt="server icon" className="equip-server-icon" /> every backend</span><br />
+            <span style={{ whiteSpace: 'nowrap' }}>with high-speed <img src="/icon-bolt.png" alt="bolt icon" className="equip-bolt-icon" /> <span className="pixel-word">streaming</span></span>
+          </h2>
+          <p className="equip-description">
+            Go network applications suffer from framework abstraction overhead, slow reflection-based serializing, and connection drops under load. Wyre unifies raw socket performance, zero-copy streams, and robust recovery middleware into one standalone, agent-ready runtime—delivering microsecond response latencies for modern distributed applications.
+          </p>
+          <div className="equip-ctas">
+            <button className="btn-primary-white">Contact sales</button>
+            <button className="btn-secondary-dark">Try Wyre free</button>
           </div>
         </div>
       </section>
@@ -481,21 +372,21 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
             </p>
 
             <div className="dev-tabs">
-              <div 
+              <div
                 onClick={() => setActiveDevTab('start-server')}
                 className={`dev-tab-item ${activeDevTab === 'start-server' ? 'active' : ''}`}
               >
                 <span className="dev-tab-name" style={{ fontSize: '14px', fontWeight: 'bold' }}>Start Server (TLS)</span>
               </div>
 
-              <div 
+              <div
                 onClick={() => setActiveDevTab('middleware')}
                 className={`dev-tab-item ${activeDevTab === 'middleware' ? 'active' : ''}`}
               >
                 <span className="dev-tab-name" style={{ fontSize: '14px', fontWeight: 'bold' }}>Recovery & CORS Middleware</span>
               </div>
 
-              <div 
+              <div
                 onClick={() => setActiveDevTab('json-helpers')}
                 className={`dev-tab-item ${activeDevTab === 'json-helpers' ? 'active' : ''}`}
               >
