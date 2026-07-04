@@ -14,6 +14,18 @@ export const Header: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
   return (
     <header className="header">
       <div className="container header-container">
@@ -47,7 +59,7 @@ export const Header: React.FC = () => {
         </button>
       </div>
 
-      {/* Pure CSS mobile menu - no JS animation library for max perf */}
+      {/* Pure CSS mobile menu */}
       <div className={`mobile-menu-overlay ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="mobile-menu-header">
           <div className="logo-container">
