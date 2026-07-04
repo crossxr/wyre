@@ -3,6 +3,7 @@ package wyre
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"strconv"
@@ -378,5 +379,112 @@ func TestUnifiedStreaming(t *testing.T) {
 	}
 	conn2.Close()
 }
+
+func TestMCPTransport(t *testing.T) {
+	router := NewRouter()
+	mcp := NewMCPHandler()
+
+	mcp.OnMessage(func(session *MCPSession, msg *JSONRPCMessage) {
+		if msg.Method == "ping" {
+			reply, _ := NewJSONRPCResponse(msg.ID, "pong")
+			_ = session.Send(reply)
+		}
+	})
+
+	router.HandleFunc("GET", "/sse", mcp.HandleSSE)
+	router.HandleFunc("POST", "/message", mcp.HandleMessage)
+
+	cfg := DefaultConfig("127.0.0.1:0")
+	cfg.Handler = router
+	server := NewWithConfig(cfg)
+
+	listener, err := net.Listen("tcp", server.cfg.Addr)
+	if err != nil {
+		t.Fatalf("failed to listen: %v", err)
+	}
+	server.ln = listener
+	server.conns = make(map[net.Conn]struct{})
+	
+	go func() {
+		_ = server.serve()
+	}()
+	defer server.Shutdown(context.Background())
+	addr := listener.Addr().String()
+
+	// 1. Establish SSE Client Connection
+	connSSE, err := net.Dial("tcp", addr)
+	if err != nil {
+		t.Fatalf("failed to connect to sse: %v", err)
+	}
+	defer connSSE.Close()
+
+	_, _ = connSSE.Write([]byte("GET /sse HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n"))
+	rSSE := bufio.NewReader(connSSE)
+
+	// skip headers
+	for {
+		line, _ := rSSE.ReadString('\n')
+		if line == "\r\n" {
+			break
+		}
+	}
+
+	// read first SSE event: endpoint
+	sizeLine, _ := rSSE.ReadString('\n')
+	sz, _ := strconv.ParseInt(strings.TrimSpace(sizeLine), 16, 64)
+	endpointBytes := make([]byte, sz)
+	_, _ = io.ReadFull(rSSE, endpointBytes)
+	endpointEvent := string(endpointBytes)
+	if !strings.Contains(endpointEvent, "event: endpoint") || !strings.Contains(endpointEvent, "data: /message?sessionId=sess_") {
+		t.Fatalf("expected endpoint event handshake, got: %q", endpointEvent)
+	}
+
+	// Extract session ID from event
+	// data: /message?sessionId=sess_12345
+	lines := strings.Split(endpointEvent, "\n")
+	var sessionId string
+	for _, l := range lines {
+		if strings.HasPrefix(l, "data: ") {
+			dataVal := strings.TrimPrefix(l, "data: ")
+			sessionId = getQueryParam(strings.Split(dataVal, "?")[1], "sessionId")
+		}
+	}
+
+	if sessionId == "" {
+		t.Fatalf("session ID not found in handshake: %q", endpointEvent)
+	}
+
+	// Read trailing newline of the first chunk
+	_, _ = rSSE.ReadString('\n')
+
+	// 2. Client POSTs standard JSON-RPC command
+	connPOST, err := net.Dial("tcp", addr)
+	if err != nil {
+		t.Fatalf("failed to connect for post: %v", err)
+	}
+	defer connPOST.Close()
+
+	postBody := `{"jsonrpc":"2.0","id":1,"method":"ping"}`
+	reqStr := fmt.Sprintf("POST /message?sessionId=%s HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", sessionId, len(postBody), postBody)
+	_, _ = connPOST.Write([]byte(reqStr))
+
+	rPOST := bufio.NewReader(connPOST)
+	statusLine, _ := rPOST.ReadString('\n')
+	if !strings.Contains(statusLine, "202 Accepted") {
+		t.Errorf("expected 202 status on message post, got: %q", statusLine)
+	}
+
+	// 3. SSE Client receives response
+	sizeLine2, _ := rSSE.ReadString('\n')
+	sz2, _ := strconv.ParseInt(strings.TrimSpace(sizeLine2), 16, 64)
+	replyBytes := make([]byte, sz2)
+	_, _ = io.ReadFull(rSSE, replyBytes)
+
+	replyEvent := string(replyBytes)
+	if !strings.Contains(replyEvent, "event: message") || !strings.Contains(replyEvent, `"result":"pong"`) {
+		t.Errorf("expected JSON-RPC reply containing pong, got: %q", replyEvent)
+	}
+}
+
 
 
