@@ -1,30 +1,20 @@
 import { useState, useEffect } from 'react'
 import { FlickeringGrid } from "@/components/ui/flickering-grid"
 
-const FolderIconSvg = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: '#ffb74d', width: '56px', height: '56px', display: 'inline-block', verticalAlign: 'middle', margin: '0 16px' }}>
-    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-    <polygon points="12 11 12 17 17 14" fill="currentColor" opacity="0.2" />
-  </svg>
-)
 
-const SparkleIconSvg = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" style={{ color: '#2979ff', width: '48px', height: '48px', display: 'inline-block', verticalAlign: 'middle', margin: '0 12px' }}>
-    <path d="M12 2l2.4 7.2L22 11.6l-7.6 2.4L12 22l-2.4-7.6L2 11.6l7.6-2.4z" />
-  </svg>
-)
-
-const BlueUpArrow = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ color: '#2979ff', width: '36px', height: '36px', marginRight: '8px' }}>
-    <line x1="12" y1="19" x2="12" y2="5" strokeLinecap="round" />
-    <polyline points="5 12 12 5 19 12" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-)
-
-const BlueDownArrow = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ color: '#2979ff', width: '36px', height: '36px', marginRight: '8px' }}>
-    <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round" />
-    <polyline points="19 12 12 19 5 12" strokeLinecap="round" strokeLinejoin="round" />
+const PixelUpArrow = () => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="24" 
+    height="29" 
+    fill="none" 
+    viewBox="0 0 32 39" 
+    aria-hidden="true" 
+    style={{ marginRight: '6px', flexShrink: 0, display: 'inline-block', verticalAlign: 'middle', transform: 'translateY(-2px)' }}
+  >
+    <path fill="#0044FF" d="M19.2 0v6.4h-6.4V0zM19.2 6.4v6.4h-6.4V6.4zM25.6 6.4v6.4h-6.4V6.4zM32 12.8v6.4h-6.4v-6.4z"></path>
+    <path fill="#0044FF" d="M12.8 6.4v6.4H6.4V6.4zM6.4 12.8v6.4H0v-6.4zM19.2 12.8v6.4h-6.4v-6.4z"></path>
+    <path fill="#0044FF" d="M19.2 19.2v6.4h-6.4v-6.4zM19.2 32v6.4h-6.4V32z"></path>
   </svg>
 )
 
@@ -353,7 +343,7 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
         <div className="container transform-container">
           {/* Headline */}
           <h2 className="transform-headline">
-            Wyre transforms <FolderIconSvg /> <span className="serif-word">raw socket bytes</span> into decision-ready <SparkleIconSvg /> intelligence automatically, across your whole backend.
+            Wyre transforms <img src="/icon-bytes.png" alt="bytes icon" className="inline-icon-img" /> <span className="pixel-word">raw socket bytes</span> into agent-ready <img src="/icon-star.png" alt="star icon" className="inline-icon-img star-icon-img" /> streaming pipelines automatically, across your whole distributed stack.
           </h2>
 
           {/* Stats Row */}
@@ -361,36 +351,36 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
             {/* Stat 1 */}
             <div className="stat-card-custom">
               <div className="stat-number-wrapper">
-                <BlueUpArrow />
+                <PixelUpArrow />
                 <span className="stat-number-custom">10x</span>
               </div>
               <h4 className="stat-title-custom">Throughput performance</h4>
               <p className="stat-desc-custom">
-                More than ten times the concurrency of traditional frameworks. Handles thousands of requests per second.
+                Sub-microsecond Trie routing and sync.Pool connection recycling deliver more than ten times the concurrency of traditional net/http wrappers.
               </p>
             </div>
 
             {/* Stat 2 */}
             <div className="stat-card-custom">
               <div className="stat-number-wrapper">
-                <BlueDownArrow />
-                <span className="stat-number-custom">85%</span>
+                <PixelUpArrow />
+                <span className="stat-number-custom">90%</span>
               </div>
-              <h4 className="stat-title-custom">Memory allocation overhead</h4>
+              <h4 className="stat-title-custom">Streaming memory savings</h4>
               <p className="stat-desc-custom">
-                Drastically reduced heap allocations via sync.Pool recycling. Near-zero garbage collection pressure.
+                Zero-copy LLM proxying and SSE backpressure prevent buffer bloat on slow client connections, reducing active memory consumption by 90%.
               </p>
             </div>
 
             {/* Stat 3 */}
             <div className="stat-card-custom">
               <div className="stat-number-wrapper">
-                <BlueUpArrow />
-                <span className="stat-number-custom">99.9%</span>
+                <PixelUpArrow />
+                <span className="stat-number-custom">99.99%</span>
               </div>
-              <h4 className="stat-title-custom">Operational reliability</h4>
+              <h4 className="stat-title-custom">Operational resilience</h4>
               <p className="stat-desc-custom">
-                Zero-downtime hot upgrades and robust panic recovery. Built for continuous uptime under load.
+                Graceful connection draining, hot config reload, and pluggable CRDT rate limiters guarantee absolute high availability under heavy burst load.
               </p>
             </div>
           </div>

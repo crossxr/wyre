@@ -1211,7 +1211,7 @@ a:hover {
 }
 
 .vibes-text {
-  font-family: 'VT323', monospace;
+  font-family: 'Jersey 10 Charted', sans-serif;
   font-weight: 400;
   color: #ffffff;
   font-size: 125px;
@@ -1270,45 +1270,71 @@ a:hover {
 
 /* Wyre Transformations & Stats Section */
 .transform-section {
+  position: relative;
   padding: 100px 0;
   border-top: 1px solid #1e1e1e;
   border-bottom: 1px solid #1e1e1e;
-  background-color: #000000;
+  /* Dark completely on the left, fading to transparent on the right to reveal flickering grid */
+  background: linear-gradient(to right, #000000 0%, #000000 45%, rgba(0, 0, 0, 0) 100%) !important;
+  z-index: 2;
 }
 
 .transform-container {
   display: flex;
   flex-direction: column;
   gap: 80px;
+  position: relative;
+  z-index: 3;
 }
 
 .transform-headline {
   font-size: 56px;
   font-weight: 600;
-  line-height: 1.15;
+  line-height: 1.25;
   letter-spacing: -2px;
   color: var(--color-bone);
   max-width: 1050px;
+  text-align: left;
 }
 
-.transform-headline .serif-word {
-  font-family: Georgia, 'Times New Roman', Times, serif;
-  font-style: italic;
-  font-weight: 300;
+.transform-headline .pixel-word {
+  font-family: 'Jersey 10 Charted', sans-serif;
+  font-weight: 400;
   color: #ffffff;
+  font-size: 76px;
+  letter-spacing: -1px;
+  vertical-align: middle;
+  line-height: 1;
+  display: inline-block;
+}
+
+.inline-icon-img {
+  width: 76px;
+  height: 76px;
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 8px 0 8px; /* compact and seamless gap */
+  transform: translateY(-4px);
+}
+
+.star-icon-img {
+  width: 64px;
+  height: 64px;
+  margin: 0 6px 0 6px; /* compact and seamless gap */
+  transform: translateY(-4px);
 }
 
 /* Stats Row */
 .stats-row-custom {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 48px;
+  gap: 32px;
 }
 
 @media (max-width: 768px) {
   .stats-row-custom {
     grid-template-columns: 1fr;
-    gap: 48px;
+    gap: 32px;
   }
 }
 
@@ -1322,12 +1348,12 @@ a:hover {
 .stat-number-wrapper {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .stat-number-custom {
   font-family: 'VT323', monospace;
-  font-size: 80px;
+  font-size: 72px;
   line-height: 1;
   color: #ffffff;
   letter-spacing: -1px;
@@ -1336,15 +1362,15 @@ a:hover {
 .stat-title-custom {
   font-family: var(--font-inter);
   font-weight: 600;
-  font-size: 17px;
+  font-size: 15px;
   color: #ffffff;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .stat-desc-custom {
   font-family: var(--font-inter);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.45;
   color: var(--color-ash);
 }
 
