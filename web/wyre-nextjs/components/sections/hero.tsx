@@ -2,7 +2,7 @@ import React from 'react'
 
 export const Hero: React.FC = () => {
   return (
-    <section className="hero-section" style={{ paddingBottom: '0px' }}>
+    <section id="hero" className="hero-section" style={{ paddingBottom: '0px' }}>
       <div className="container">
         <div className="hero-centered">
           {/* G2 / Capterra ratings */}

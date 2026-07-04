@@ -2,7 +2,7 @@ import React from 'react'
 
 export const FeaturesSection: React.FC = () => {
   return (
-    <section className="features-section">
+    <section id="features" className="features-section">
       <div className="container" style={{ position: 'relative', zIndex: 2 }}>
         <div className="features-header-layout">
           <div>

@@ -123,6 +123,17 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
                 const newHeight = height || container.clientHeight
                 setCanvasSize({ width: newWidth, height: newHeight })
                 gridParams = setupCanvas(canvas, newWidth, newHeight)
+                if (gridParams) {
+                    drawGrid(
+                        ctx,
+                        newWidth * gridParams.dpr,
+                        newHeight * gridParams.dpr,
+                        gridParams.cols,
+                        gridParams.rows,
+                        gridParams.squares,
+                        gridParams.dpr
+                    )
+                }
             }
 
             updateCanvasSize()

@@ -2,7 +2,7 @@ import React from 'react'
 
 export const StreamingSection: React.FC = () => {
   return (
-    <section className="features-section" style={{ borderTop: 'none' }}>
+    <section id="streaming" className="features-section" style={{ borderTop: 'none', borderBottom: 'none' }}>
       <div className="container" style={{ position: 'relative', zIndex: 2 }}>
         <div className="features-header-layout">
           <div>

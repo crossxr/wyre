@@ -9,7 +9,7 @@ import { TransformSection } from '@/components/sections/transform-section'
 import { EquipSection } from '@/components/sections/equip-section'
 import { FeaturesSection } from '@/components/sections/features-section'
 import { StreamingSection } from '@/components/sections/streaming-section'
-import { KpiStatsSection } from '@/components/sections/kpi-stats-section'
+import { TestimonialSection } from '@/components/sections/testimonial-section'
 import { DevSandbox } from '@/components/sections/dev-sandbox'
 import { Footer } from '@/components/sections/footer'
 
@@ -24,14 +24,14 @@ export default function Home() {
     let animationFrameId: number;
     let fadeTimer: NodeJS.Timeout;
     let disableTimer: NodeJS.Timeout;
-    
+
     const duration = 1000; // Exact duration in ms for counter to reach 100%
     const startTime = performance.now();
 
     const updateProgress = () => {
       const elapsed = performance.now() - startTime;
       const progress = Math.min(100, Math.floor((elapsed / duration) * 100));
-      
+
       setLoadingProgress(progress);
 
       if (progress < 100) {
@@ -40,7 +40,7 @@ export default function Home() {
         fadeTimer = setTimeout(() => {
           setPreloaderVisible(false);
         }, 80);
-        
+
         disableTimer = setTimeout(() => {
           setPreloaderActive(false);
         }, 700);
@@ -72,7 +72,7 @@ export default function Home() {
   return (
     <div className="blueprint-grid" style={{ minHeight: '100vh', position: 'relative' }}>
       <Preloader active={preloaderActive} visible={preloaderVisible} progress={loadingProgress} />
-      
+
       <div className={`page-reveal-wrapper ${!preloaderVisible ? 'revealed' : ''}`}>
         <FlickeringGrid
           squareSize={4}
@@ -105,7 +105,7 @@ export default function Home() {
         <EquipSection />
         <FeaturesSection />
         <StreamingSection />
-        <KpiStatsSection />
+        <TestimonialSection />
         <DevSandbox />
         <Footer />
       </div>

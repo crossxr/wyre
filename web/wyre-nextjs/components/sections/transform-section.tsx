@@ -3,7 +3,7 @@ import { PixelUpArrow } from '@/components/ui/pixel-up-arrow'
 
 export const TransformSection: React.FC = () => {
   return (
-    <section className="transform-section">
+    <section id="transform" className="transform-section">
       <div className="container transform-container">
         {/* Headline */}
         <h2 className="transform-headline">

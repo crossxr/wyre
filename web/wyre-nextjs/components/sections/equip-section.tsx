@@ -2,7 +2,7 @@ import React from 'react'
 
 export const EquipSection: React.FC = () => {
   return (
-    <section className="equip-section">
+    <section id="equip" className="equip-section">
       <div className="container equip-container">
         <h2 className="equip-headline">
           <span className="responsive-nowrap">Equip <img src="/icon-server.png" alt="server icon" className="equip-server-icon" /> every backend </span>
