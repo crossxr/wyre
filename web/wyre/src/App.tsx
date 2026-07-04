@@ -356,8 +356,8 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
       {/* Promo Announcement Banner */}
       <div className="promo-banner" style={{ background: '#2979ff', color: '#ffffff', fontWeight: 600 }}>
         <span className="badge" style={{ background: '#ffffff', color: '#2979ff' }}>NEW</span>
-        <span>Wyre HTTP Server v1.0.0 Standalone release is live!</span>
-        <a href="#developers" style={{ color: '#ffffff', textDecoration: 'underline', marginLeft: '8px' }}>Get started now &rarr;</a>
+        <span>Wyre v1.0.0 Standalone release is live!</span>
+        <a href="#developers" style={{ color: '#ffffff', textDecoration: 'underline', marginLeft: '8px' }}>Get started &rarr;</a>
       </div>
 
       {/* Global Header */}
@@ -439,8 +439,8 @@ router.HandleFunc("POST", "/json", func(w *wyre.ResponseWriter, r *wyre.Request)
 
             {/* Headline */}
             <h1 className="hero-headline-custom">
-              Serve with sockets,<br />
-              not <span className="vibes-wrapper"><img src="/hero-vibes-icon.webp" alt="frameworks cap" className="vibes-icon" /><span className="vibes-text">frameworks</span></span>
+              <span className="headline-line">Serve with sockets,</span><br />
+              <span className="headline-line">not <span className="vibes-wrapper"><img src="/hero-vibes-icon.webp" alt="frameworks cap" className="vibes-icon" /><span className="vibes-text">frameworks</span></span></span>
             </h1>
 
             {/* Description */}

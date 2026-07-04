@@ -1447,6 +1447,11 @@ a:hover {
   max-width: 900px;
 }
 
+.hero-headline-custom .headline-line {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 .hero-headline-custom .vibes-wrapper {
   display: inline-flex;
   align-items: center;
@@ -1914,11 +1919,23 @@ a:hover {
 
   /* Promo Banner */
   .promo-banner {
-    font-size: 11px;
+    font-size: 10px;
     padding: 8px 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 4px;
+    flex-wrap: nowrap;
+    justify-content: safe center;
+    overflow-x: auto;
+    white-space: nowrap;
+    gap: 6px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .promo-banner::-webkit-scrollbar {
+    display: none;
+  }
+
+  .promo-banner > * {
+    flex-shrink: 0;
   }
 
   /* Hero Section */
@@ -2046,6 +2063,43 @@ a:hover {
     width: 100% !important;
     padding: 16px 24px !important;
     text-align: center !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 16px !important;
+  }
+
+  .hero-headline-custom {
+    font-size: 32px;
+    letter-spacing: -0.8px;
+    line-height: 1.25;
+  }
+  
+  .vibes-text {
+    font-size: 34px;
+    letter-spacing: -0.5px;
+  }
+  
+  .vibes-icon {
+    width: 36px;
+    transform: translateY(-2px);
+    margin: 0 4px;
+  }
+
+  /* Bento Grid Mobile Optimizations */
+  .premium-features-grid {
+    gap: 16px !important;
+  }
+
+  .premium-feature-visual-wrapper {
+    height: 180px !important;
+  }
+
+  .premium-feature-content {
+    padding: 20px 16px !important;
+    gap: 8px !important;
   }
 }
 
@@ -2188,6 +2242,7 @@ a:hover {
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background-color: #0044ff; /* Deep blue color */
   z-index: 99999;
   display: flex;
@@ -2266,7 +2321,7 @@ a:hover {
 
 @media (max-width: 768px) {
   .preloader-overlay {
-    padding: 40px;
+    padding: 40px 40px calc(80px + env(safe-area-inset-bottom)) 40px;
   }
   
   .preloader-logo-img {
