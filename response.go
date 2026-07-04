@@ -78,6 +78,7 @@ type ResponseWriter struct {
 	bytesWritten int64
 	chunked      bool
 	hijacked     bool
+	onHijack     func()
 }
 
 func newResponseWriter(conn net.Conn, br *bufio.Reader, bw *bufio.Writer) *ResponseWriter {
@@ -104,6 +105,9 @@ func (w *ResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		return nil, nil, fmt.Errorf("wyre: connection already hijacked")
 	}
 	w.hijacked = true
+	if w.onHijack != nil {
+		w.onHijack()
+	}
 	rw := bufio.NewReadWriter(w.br, w.bw)
 	return w.conn, rw, nil
 }

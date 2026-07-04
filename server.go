@@ -249,7 +249,50 @@ func (s *Server) handleConn(conn net.Conn) {
 			w.header.Set("Connection", "close")
 		}
 
+		ctx, cancel := context.WithCancel(context.Background())
+		req.ctx = ctx
+
+		stopMonitor := make(chan struct{})
+		monitorDone := make(chan struct{})
+		var closeOnce sync.Once
+		closeMonitor := func() {
+			closeOnce.Do(func() {
+				close(stopMonitor)
+			})
+		}
+		w.onHijack = closeMonitor
+
+		go func() {
+			defer close(monitorDone)
+			buf := make([]byte, 1)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-stopMonitor:
+					return
+				default:
+				}
+
+				conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+				_, err := conn.Read(buf)
+				if err != nil {
+					var netErr net.Error
+					if errors.As(err, &netErr) && netErr.Timeout() {
+						continue
+					}
+					cancel()
+					return
+				}
+			}
+		}()
+
 		s.dispatch(w, req)
+
+		cancel()
+		closeMonitor()
+		<-monitorDone
+		conn.SetReadDeadline(time.Time{})
 
 		if w.hijacked {
 			hijacked = true

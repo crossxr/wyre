@@ -2,7 +2,6 @@ package wyre
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"net/http"
 )
@@ -37,7 +36,7 @@ func FromHTTPHandler(h http.Handler) Handler {
 			body = http_EmptyReader{}
 		}
 
-		stdReq, err := http.NewRequestWithContext(context.Background(), r.Method, r.Target, body)
+		stdReq, err := http.NewRequestWithContext(r.Context(), r.Method, r.Target, body)
 		if err != nil {
 			w.WriteFixedBody(500, "text/plain", []byte("internal server error"))
 			return

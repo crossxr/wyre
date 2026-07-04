@@ -2,6 +2,7 @@ package wyre
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -42,6 +43,7 @@ type Request struct {
 	rawBody    []byte
 	RemoteAddr string
 	params     map[string]string
+	ctx        context.Context
 }
 
 var requestPool = sync.Pool{
@@ -70,6 +72,7 @@ func (r *Request) Reset() {
 	r.Proto = ""
 	r.RemoteAddr = ""
 	r.Body = nil
+	r.ctx = nil
 	
 	for k := range r.Headers {
 		delete(r.Headers, k)
@@ -83,6 +86,21 @@ func (r *Request) Reset() {
 	} else {
 		r.rawBody = r.rawBody[:0]
 	}
+}
+
+func (r *Request) Context() context.Context {
+	if r.ctx == nil {
+		return context.Background()
+	}
+	return r.ctx
+}
+
+func (r *Request) WithContext(ctx context.Context) *Request {
+	if ctx == nil {
+		panic("nil context")
+	}
+	r.ctx = ctx
+	return r
 }
 
 func (r *Request) Param(key string) string {
