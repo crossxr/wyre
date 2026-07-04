@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'PP Mondwest';
+  src: url('/fonts/PPMondwest-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* Colors */
   --color-soft-indigo: #6798ff;
@@ -1243,7 +1251,7 @@ a:hover {
 }
 
 .vibes-text {
-  font-family: 'Pixelify Sans', sans-serif;
+  font-family: 'PP Mondwest', sans-serif;
   font-weight: 400;
   color: #ffffff;
   font-size: 100px;
@@ -1330,7 +1338,7 @@ a:hover {
 }
 
 .transform-headline .pixel-word {
-  font-family: 'Pixelify Sans', sans-serif;
+  font-family: 'PP Mondwest', sans-serif;
   font-weight: 400;
   color: #ffffff;
   font-size: 68px;
@@ -1406,7 +1414,7 @@ a:hover {
 }
 
 .stat-number-custom {
-  font-family: 'Pixelify Sans', sans-serif;
+  font-family: 'PP Mondwest', sans-serif;
   font-size: 64px;
   line-height: 1;
   color: #ffffff;
@@ -1484,15 +1492,15 @@ a:hover {
 }
 
 .equip-headline .pixel-word {
-  font-family: 'Pixelify Sans', sans-serif;
+  font-family: 'PP Mondwest', sans-serif;
   font-weight: 400;
   color: #ffffff;
-  font-size: 64px;
+  font-size: 76px;
   letter-spacing: -1px;
   vertical-align: middle;
   line-height: 1;
   display: inline-block;
-  transform: translateY(-3px);
+  transform: translateY(-5px);
 }
 
 .equip-description {
@@ -1516,7 +1524,7 @@ a:hover {
     letter-spacing: -1.5px;
   }
   .equip-headline .pixel-word {
-    font-size: 48px;
+    font-size: 58px;
     letter-spacing: -1px;
   }
   .equip-server-icon {
@@ -1541,7 +1549,7 @@ a:hover {
     letter-spacing: -1px;
   }
   .equip-headline .pixel-word {
-    font-size: 32px;
+    font-size: 38px;
     letter-spacing: -0.5px;
   }
   .equip-server-icon {
