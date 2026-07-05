@@ -83,6 +83,7 @@ type ResponseWriter struct {
 	chunked      bool
 	hijacked     bool
 	onHijack     func()
+	onWrite      func([]byte)
 }
 
 func newResponseWriter(conn net.Conn, br *bufio.Reader, bw *bufio.Writer) *ResponseWriter {
@@ -164,6 +165,9 @@ func (w *ResponseWriter) Write(p []byte) (int, error) {
 	}
 	if len(p) == 0 {
 		return 0, nil
+	}
+	if w.onWrite != nil {
+		w.onWrite(p)
 	}
 	if !w.wroteHeader {
 		if err := w.WriteHeader(200); err != nil {
