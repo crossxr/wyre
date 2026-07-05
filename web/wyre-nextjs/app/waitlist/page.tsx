@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from 'react'
-import { FlickeringGrid } from '@/components/ui/flickering-grid'
 
 export default function Waitlist() {
   const [email, setEmail] = useState('')
@@ -49,23 +48,35 @@ export default function Waitlist() {
       overflow: 'hidden',
       padding: '24px'
     }}>
-      {/* Background Grid */}
-      <FlickeringGrid
-        squareSize={4}
-        gridGap={6}
-        flickerChance={0.2}
-        color="rgb(0, 68, 255)"
-        maxOpacity={0.15}
+      {/* Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
         style={{
           position: 'absolute',
           top: 0,
           left: 0,
           width: '100%',
           height: '100%',
+          objectFit: 'cover',
           zIndex: 0,
+          opacity: 0.35,
           pointerEvents: 'none',
         }}
-      />
+      >
+        <source src="https://ucarecdn.com/3682ecf0-f747-4df2-9505-1f76b302bc94/adaptive_video/" type="video/mp4" />
+      </video>
+
+      {/* Radial Gradient Overlay for contrast and readability */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'radial-gradient(circle at center, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.75) 100%)',
+        zIndex: 1,
+        pointerEvents: 'none',
+      }} />
 
       {/* Main Container Card */}
       <div className="waitlist-card" style={{
@@ -73,8 +84,7 @@ export default function Waitlist() {
         zIndex: 10,
         width: '100%',
         maxWidth: '480px',
-        backgroundColor: 'rgba(10, 10, 12, 0.8)',
-        backdropFilter: 'blur(16px)',
+        backgroundColor: '#0a0a0c',
         border: '1px solid #1e1e1e',
         borderRadius: '16px',
         padding: '40px 32px',
