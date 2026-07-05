@@ -293,7 +293,7 @@ func main() {
   return (
     <section 
       id="sandbox"
-      className="pb-20 md:pb-28 relative z-10 overflow-hidden bg-black border-b border-[#1e1e1e]"
+      className="pb-20 md:pb-28 relative z-10 overflow-hidden bg-black"
       style={{ paddingTop: '140px' }}
     >
       {/* Background Flickering Grid */}

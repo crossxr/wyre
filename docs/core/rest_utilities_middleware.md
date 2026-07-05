@@ -1,37 +1,80 @@
 # REST Utilities & Middleware
 
-Wyre provides basic REST JSON request/response helpers, built-in panic recovery, and Cross-Origin Resource Sharing (CORS) support.
+Wyre provides built-in utilities to simplify JSON serialization/deserialization and raw payload handling, along with essential middlewares to handle panic recovery and Cross-Origin Resource Sharing (CORS).
 
-## Overview
+## JSON & Body Helpers
 
-REST utility methods are integrated directly into the request and response models, while request lifecycle features are structured as middleware function chains.
+Wyre includes helper methods on the request and response objects to streamline data exchanges.
 
-## Implementation Details
+### 1. Reading JSON Payloads (`r.ReadJSON`)
 
-### 1. JSON & Body Helpers
-- **Read JSON:** Handlers can parse JSON request bodies directly via [ReadJSON](file:///c:/projects/oun/request.go#L98) on `Request`:
-  ```go
-  func (r *Request) ReadJSON(dst interface{}) error {
-      return json.Unmarshal(r.rawBody, dst)
-  }
-  ```
-- **Write JSON:** Handlers can render JSON responses using [WriteJSON](file:///c:/projects/oun/response.go#L214) on `ResponseWriter`. It marshals the interface, sets the `Content-Type: application/json` header, automatically calculates and sets `Content-Length`, and writes it to the socket buffer.
-- **Write Fixed Body:** Handlers can send pre-buffered or plain-text payloads using [WriteFixedBody](file:///c:/projects/oun/response.go#L190).
+You can parse an incoming JSON request body directly into a destination struct using `r.ReadJSON(dst)`.
 
-### 2. CORS Middleware
-The CORS middleware is defined in [middleware.go](file:///c:/projects/oun/middleware.go#L16). It maps allowed origins, methods, and headers, writes the CORS headers to the response wrapper, and handles HTTP `OPTIONS` preflight requests immediately by returning a `204 No Content` status.
+```go
+type CreateUserRequest struct {
+    Name  string `json:"name"`
+    Email string `json:"email"`
+}
 
-### 3. Panic Recovery
-Panic protection is handled at two distinct layers for maximum production safety:
-- **`Recovery()` Middleware:** A standard middleware [Recovery](file:///c:/projects/oun/middleware.go#L38) recovers from panic, prints a debug stack trace, and sends a `500 Internal Server Error` response back.
-- **Built-in Server Dispatch Recovery:** For safety against custom handler setups that omit the recovery middleware, the server's request dispatcher in [dispatch](file:///c:/projects/oun/server.go#L288) implements an internal panic recovery deferred function to prevent the active TCP worker thread from crashing the entire program.
+func createUserHandler(w *wyre.ResponseWriter, r *wyre.Request) {
+    var req CreateUserRequest
+    if err := r.ReadJSON(&req); err != nil {
+        w.WriteFixedBody(400, "text/plain", []byte("Invalid JSON payload"))
+        return
+    }
+    
+    // Process user creation...
+}
+```
+
+### 2. Writing JSON Responses (`w.WriteJSON`)
+
+You can serialize any Go value to JSON and write it directly to the response socket using `w.WriteJSON(status, data)`. This automatically marshals the data, sets `Content-Type: application/json`, and calculates the `Content-Length`.
+
+```go
+type UserResponse struct {
+    ID   string `json:"id"`
+    Name string `json:"name"`
+}
+
+func getUserHandler(w *wyre.ResponseWriter, r *wyre.Request) {
+    resp := UserResponse{
+        ID:   "usr_123",
+        Name: "Alice",
+    }
+    
+    w.WriteJSON(200, resp)
+}
+```
+
+### 3. Writing Fixed Body Responses (`w.WriteFixedBody`)
+
+If you want to send pre-buffered data, HTML, or raw strings without chunked streaming overhead, use `w.WriteFixedBody(status, contentType, bodyBytes)`. This writes the exact length of the payload on the socket in a single write call.
+
+```go
+w.WriteFixedBody(200, "text/html", []byte("<h1>Welcome!</h1>"))
+```
 
 ---
 
-## Implementation Status & Missing Elements
+## Built-In Middlewares
 
-- **Status:** **Partially Implemented**. Basic helpers and panic/CORS middlewares are provided.
-- **Missing Elements / Limitations:**
-  - **No Query Parameter Parser:** There is no helper method on `Request` to parse query parameters (e.g. `?name=val`) into a structured map or retrieve keys easily; handlers must parse `r.RawQuery` manually.
-  - **No Group/Sub-Router Middlewares:** Middlewares can only be configured globally on the router (`rt.Use`). There is no support for path-prefix specific middlewares or route groups with independent middleware chains.
-  - **No Validation Utilities:** There are no built-in utilities for request validation (e.g. schema binding or input sanitization).
+Wyre bundles key middlewares to secure and control request lifecycles.
+
+### 1. Recovery Middleware (`wyre.Recovery()`)
+
+The `Recovery()` middleware recovers from runtime panics occurring inside your handler stack. It logs the stack trace and responds to the client with a `500 Internal Server Error` instead of crashing the server process.
+
+```go
+router := wyre.NewRouter()
+router.Use(wyre.Recovery())
+```
+
+### 2. CORS Middleware (`wyre.CORS()`)
+
+The `CORS()` middleware handles Cross-Origin Resource Sharing headers for browser compatibility. It maps standard allowed origins, headers, and methods, and responds to browser preflight `OPTIONS` requests automatically with `204 No Content`.
+
+```go
+router := wyre.NewRouter()
+router.Use(wyre.CORS())
+```

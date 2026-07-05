@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 
 export const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -42,7 +43,7 @@ export const Header: React.FC = () => {
           <nav className="nav-links" style={{ gap: '8px' }}>
             <button className="nav-pill">Product</button>
             <button className="nav-pill">Solutions</button>
-            <button className="nav-pill">Resources</button>
+            <Link href="/docs" className="nav-pill">Documentation</Link>
             <button className="nav-pill">Enterprise</button>
             <button className="nav-pill">Customers</button>
             <button className="nav-pill">Pricing</button>
@@ -75,7 +76,7 @@ export const Header: React.FC = () => {
           <nav className="mobile-menu-links">
             <a href="#product" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Product</a>
             <a href="#solutions" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Solutions</a>
-            <a href="#resources" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Resources</a>
+            <Link href="/docs" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Documentation</Link>
             <a href="#enterprise" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Enterprise</a>
             <a href="#customers" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Customers</a>
             <a href="#pricing" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Pricing</a>

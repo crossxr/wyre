@@ -1,82 +1,91 @@
 # Model Context Protocol (MCP) Streamable HTTP Transport
 
-Wyre features native support for the Model Context Protocol (MCP) Streamable HTTP transport, allowing Go developers to build and host high-performance tool, prompt, and context servers for AI clients (like Claude Desktop or custom agents).
+Wyre includes native, first-class support for the Model Context Protocol (MCP) Streamable HTTP transport. This allows you to easily build and host high-performance tool, prompt, and context servers for AI clients (such as Claude Desktop or custom agents) using HTTP SSE transport.
 
-## Overview
+## What is MCP HTTP SSE Transport?
 
-The Model Context Protocol (MCP) defines a client-server architecture to provide context/tools to LLM agents. While stdio is common for local servers, **HTTP SSE Transport** is the standard protocol for remote or distributed deployments.
+The Model Context Protocol (MCP) defines an open standard client-server architecture for providing data, prompts, and tool definitions to LLM agents. While stdio is common for local servers, the HTTP SSE (Server-Sent Events) transport is the standard for hosting remote, distributed, or cloud-deployed MCP servers.
 
-The HTTP SSE transport lifecycle consists of two parts:
-1. **GET `/sse`:** The client opens a persistent SSE connection. The server responds by assigning a unique `sessionId` and pushing a relative endpoint registration event:
-   ```
-   event: endpoint
-   data: /message?sessionId=<sessionId>
-   ```
-2. **POST `/message`:** The client posts a JSON-RPC 2.0 message to `/message?sessionId=<sessionId>`. The server acknowledges the receipt with `202 Accepted` immediately, processes the message asynchronously, and pushes the reply back over the established SSE connection as a `message` event.
+The HTTP SSE transport protocol works in two phases:
+1. **Connection (GET `/sse`)**: The client opens a persistent SSE connection. Wyre registers a unique `sessionId`, issues a connection registration event specifying where to send subsequent client messages (e.g. `/message?sessionId=<id>`), and keeps the stream open.
+2. **Execution (POST `/message?sessionId=<id>`)**: The client posts JSON-RPC 2.0 requests to the `/message` endpoint. The server processes them and pushes responses back over the active SSE stream.
 
----
+## Core API
 
-## Core Components
+Wyre handles session tracking and handshakes via the `wyre.MCPHandler`:
 
-The implementation is located in [mcp.go](file:///c:/projects/oun/mcp.go):
-
-- **[JSONRPCMessage](file:///c:/projects/oun/mcp.go#L12):** Standard model representing request, response, and notification JSON-RPC 2.0 payloads.
-- **[MCPSession](file:///c:/projects/oun/mcp.go#L59):** Represents an individual client session, containing a reference to the active `SSEStream` and exposing a thread-safe `Send(msg)` method to push JSON-RPC responses.
-- **[MCPHandler](file:///c:/projects/oun/mcp.go#L77):** The central controller that registers sessions, tracks maps, handles SSE handshakes, and routes incoming messages to matching sessions.
-
----
+- **`wyre.NewMCPHandler()`**: Initializes a new handler.
+- **`mcp.OnConnect(func(session *wyre.MCPSession))`**: Callback invoked when a new client session starts.
+- **`mcp.OnMessage(func(session *wyre.MCPSession, msg *wyre.JSONRPCMessage))`**: Callback invoked when a client sends a message. Use `session.Send(reply)` to write responses.
+- **`mcp.HandleSSE` and `mcp.HandleMessage`**: Endpoint handlers registered on the router to manage connection and execution requests.
 
 ## Usage Example
 
-The following code illustrates how to build a basic MCP server using Wyre:
+The following code illustrates how to build a basic MCP server that registers a custom `get_weather` tool:
 
 ```go
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"wyre"
+    "fmt"
+    "wyre"
 )
 
 func main() {
-	router := wyre.NewRouter()
-	mcp := wyre.NewMCPHandler()
+    router := wyre.NewRouter()
+    mcp := wyre.NewMCPHandler()
 
-	// 1. Listen for new client connections
-	mcp.OnConnect(func(session *wyre.MCPSession) {
-		fmt.Printf("MCP Session %s connected\n", session.ID)
-	})
+    // 1. Listen for new client connections
+    mcp.OnConnect(func(session *wyre.MCPSession) {
+        fmt.Printf("MCP Session %s connected\n", session.ID)
+    })
 
-	// 2. Process incoming JSON-RPC tool/prompt queries
-	mcp.OnMessage(func(session *wyre.MCPSession, msg *wyre.JSONRPCMessage) {
-		fmt.Printf("Received message %s with method %q\n", msg.ID, msg.Method)
+    // 2. Process incoming JSON-RPC tool/prompt queries
+    mcp.OnMessage(func(session *wyre.MCPSession, msg *wyre.JSONRPCMessage) {
+        fmt.Printf("Received message %s with method %q\n", msg.ID, msg.Method)
 
-		if msg.Method == "tools/list" {
-			// Respond with list of available tools
-			result := map[string]interface{}{
-				"tools": []map[string]string{
-					{
-						"name":        "get_weather",
-						"description": "Get current weather in a city",
-					},
-				},
-			}
-			
-			response, _ := wyre.NewJSONRPCResponse(msg.ID, result)
-			_ = session.Send(response)
-		} else {
-			// Unimplemented method error
-			errResp := wyre.NewJSONRPCError(msg.ID, -32601, "Method not found", nil)
-			_ = session.Send(errResp)
-		}
-	})
+        // Handle list tools query
+        if msg.Method == "tools/list" {
+            result := map[string]interface{}{
+                "tools": []map[string]string{
+                    {
+                        "name":        "get_weather",
+                        "description": "Get current weather in a city",
+                    },
+                },
+            }
+            response, _ := wyre.NewJSONRPCResponse(msg.ID, result)
+            _ = session.Send(response)
+            return
+        }
 
-	// 3. Register endpoints on the router
-	router.HandleFunc("GET", "/sse", mcp.HandleSSE)
-	router.HandleFunc("POST", "/message", mcp.HandleMessage)
+        // Handle tool execution query
+        if msg.Method == "tools/call" {
+            // Process tool execution logic...
+            result := map[string]interface{}{
+                "content": []map[string]string{
+                    {
+                        "type": "text",
+                        "text": "Sunny, 72°F",
+                    },
+                },
+            }
+            response, _ := wyre.NewJSONRPCResponse(msg.ID, result)
+            _ = session.Send(response)
+            return
+        }
 
-	server := wyre.NewWithConfig(wyre.DefaultConfig("127.0.0.1:8080"))
-	server.ListenAndServe()
+        // Send standard Method Not Found error for unsupported queries
+        errResp := wyre.NewJSONRPCError(msg.ID, -32601, "Method not found", nil)
+        _ = session.Send(errResp)
+    })
+
+    // 3. Register standard MCP endpoints on the router
+    router.HandleFunc("GET", "/sse", mcp.HandleSSE)
+    router.HandleFunc("POST", "/message", mcp.HandleMessage)
+
+    // 4. Start the server
+    server := wyre.NewWithConfig(wyre.DefaultConfig("127.0.0.1:8080"))
+    server.ListenAndServe()
 }
 ```

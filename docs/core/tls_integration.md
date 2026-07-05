@@ -1,40 +1,44 @@
 # TLS Integration
 
-Wyre provides native secure connections via standard `crypto/tls` out of the box.
+Wyre provides native support for secure HTTPS connections via the standard library's `crypto/tls` package. Setting up a secure endpoint is seamless and requires minimal configuration.
 
-## Overview
+## Setting Up an HTTPS Server
 
-The TLS implementation is integrated into the raw socket architecture in [server.go](file:///c:/projects/oun/server.go). By wrapping the raw listener, TLS acts transparently to the connection handler, providing encrypted communications without changing the request parser or response dispatch logic.
+To start an HTTPS server, load a certificate and key pair and execute `ListenAndServeTLS` on your server instance:
 
-## Implementation Details
+```go
+package main
 
-### 1. TLS Listener Creation
-The [ListenAndServeTLS](file:///c:/projects/oun/server.go#L86) method initializes the TLS listener:
-- **Load Certificates:** It loads the X.509 certificate and key pair using standard Go:
-  ```go
-  cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-  ```
-- **Configuration:** It initializes a basic standard library `*tls.Config`:
-  ```go
-  tlsCfg := &tls.Config{
-      Certificates: []tls.Certificate{cert},
-  }
-  ```
-- **Wrapping Listener:** It starts a standard TCP listener and then wraps it in a TLS listener:
-  ```go
-  ln, err := net.Listen("tcp", s.cfg.Addr)
-  ...
-  s.ln = tls.NewListener(ln, tlsCfg)
-  ```
+import (
+    "log"
+    "wyre"
+)
 
-### 2. Transparent Connection Processing
-Because `tls.NewListener` wraps the underlying raw TCP connection in a `tls.Conn` (which implements the standard `net.Conn` interface), all subsequent read/write operations within [handleConn](file:///c:/projects/oun/server.go#L198) and [ParseRequest](file:///c:/projects/oun/request.go#L338) remain identical whether the connection is raw TCP or TLS-secured.
+func main() {
+    router := wyre.NewRouter()
+    
+    // Register basic routes
+    router.HandleFunc("GET", "/", func(w *wyre.ResponseWriter, r *wyre.Request) {
+        w.WriteFixedBody(200, "text/plain", []byte("Hello securely over HTTPS!"))
+    })
 
----
+    // Create default configuration
+    config := wyre.DefaultConfig("0.0.0.0:443")
+    server := wyre.NewWithConfig(config)
 
-## Implementation Status & Missing Elements
+    // Load cert/key files and start serving
+    log.Println("Starting secure HTTPS server on :443...")
+    certPath := "./certs/server.crt"
+    keyPath  := "./certs/server.key"
+    
+    if err := server.ListenAndServeTLS(certPath, keyPath); err != nil {
+        log.Fatalf("HTTPS server failed: %v", err)
+    }
+}
+```
 
-- **Status:** **Fully Implemented** for basic secure servers.
-- **Missing Elements / Limitations:**
-  - **No Custom `*tls.Config` Injection:** The `Config` struct does not expose configuration properties to tune TLS versions (e.g., forcing TLS 1.3), configure cipher suites, or specify Client Certification Authorities (mutual TLS / mTLS).
-  - **No Dynamic Certificate Reloading:** Certificates are loaded once during server initialization. In a production environment with rotating certificates, the server would have to be restarted or modified to dynamically load certificates.
+## How TLS Works in Wyre
+
+Wyre integrates TLS directly into its raw socket architecture:
+1. **Transparent Listener Wrapper**: The standard TCP network listener is wrapped in a `tls.Listener` inside the `ListenAndServeTLS` routine.
+2. **Identical Handler execution**: Because the wrapped connection implements standard Go `net.Conn`, all subsequent request parsing, routing, and response writing function identically to standard HTTP. Your handlers don't need code modifications to run over TLS.

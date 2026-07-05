@@ -1,49 +1,78 @@
 # Connection Hijacking
 
-Wyre provides support for connection hijacking, giving handlers full control over the raw `net.Conn` socket stream. This allows the connection to be upgraded to WebSockets or custom full-duplex protocols.
+Wyre supports connection hijacking, allowing handlers to take full ownership of the raw TCP network socket stream (`net.Conn`). This enables you to bypass the standard HTTP request-response flow and upgrade connections to full-duplex protocols such as WebSockets or custom socket protocols.
 
-## Overview
+## The Hijacker Interface
 
-Connection hijacking allows a handler to take ownership of the underlying TCP network socket, decoupling it from the standard HTTP request-response flow. 
+Wyre's custom `ResponseWriter` implements a standard-compatible `Hijacker` interface:
 
-## Implementation Details
-
-### 1. The Hijacker Interface
-The custom [ResponseWriter](file:///c:/projects/oun/response.go#L71) implements the standard-like [Hijacker](file:///c:/projects/oun/response.go#L98) interface:
 ```go
 type Hijacker interface {
     Hijack() (net.Conn, *bufio.ReadWriter, error)
 }
 ```
 
-### 2. Hijacking the Connection
-When a handler calls [Hijack](file:///c:/projects/oun/response.go#L102):
-- The `ResponseWriter` checks if it was already hijacked.
-- It sets `w.hijacked = true`.
-- It returns the raw `net.Conn` along with the buffered reader/writer:
-  ```go
-  w.hijacked = true
-  rw := bufio.NewReadWriter(w.br, w.bw)
-  return w.conn, rw, nil
-  ```
+Calling `Hijack()` signals to Wyre's server engine that the socket ownership has been transferred to the handler. Once hijacked, the server loop ceases standard HTTP processing for this connection (such as writing chunks, flushing, or tracking idle timeouts) and delegates the connection close responsibility entirely to the handler code.
 
-### 3. Server-Side Handoff Coordination
-Within the server connection loop [handleConn](file:///c:/projects/oun/server.go#L198):
-- A deferred cleanup function is scheduled to automatically close the socket connection.
-- After running the handler dispatcher, the loop inspects whether hijacking occurred:
-  ```go
-  s.dispatch(w, req)
+## How to Hijack a Connection
 
-  if w.hijacked {
-      hijacked = true
-      return
-  }
-  ```
-- If hijacked, the server loop marks `hijacked = true` locally and returns immediately. This prevents the server loop from writing standard terminating chunks, flushing, looping for keep-alive, or invoking the deferred connection closure. The socket is cleanly handed off to the handler.
+To hijack a connection in a route handler, type-assert the response writer to `wyre.Hijacker` and call `Hijack()`.
 
----
+### Code Example: Upgrading to a Custom Socket Protocol
 
-## Implementation Status & Missing Elements
+The following example demonstrates how to hijack an incoming request connection and write custom TCP frames back to the client:
 
-- **Status:** **Fully Implemented**. The socket handoff protocol works identically to Go's standard library.
-- **Missing Elements:** None.
+```go
+package main
+
+import (
+    "fmt"
+    "io"
+    "log"
+    "net"
+    "wyre"
+)
+
+func main() {
+    router := wyre.NewRouter()
+    router.HandleFunc("GET", "/custom-socket", socketUpgradeHandler)
+
+    server := wyre.NewWithConfig(wyre.DefaultConfig("127.0.0.1:8080"))
+    server.ListenAndServe()
+}
+
+func socketUpgradeHandler(w *wyre.ResponseWriter, r *wyre.Request) {
+    // 1. Hijack the underlying TCP connection
+    conn, rw, err := w.Hijack()
+    if err != nil {
+        log.Printf("Hijacking failed: %v", err)
+        return
+    }
+    
+    // Crucial: The handler is now responsible for closing the socket connection.
+    defer conn.Close()
+
+    // 2. Write custom HTTP response upgrade headers
+    rw.WriteString("HTTP/1.1 101 Switching Protocols\r\n")
+    rw.WriteString("Upgrade: custom-protocol\r\n")
+    rw.WriteString("Connection: Upgrade\r\n\r\n")
+    rw.Flush()
+
+    // 3. Enter a custom bi-directional data loop
+    buf := make([]byte, 1024)
+    for {
+        n, err := conn.Read(buf)
+        if err != nil {
+            if err != io.EOF {
+                log.Printf("Socket read error: %v", err)
+            }
+            break
+        }
+        
+        // Echo input back with decoration
+        input := string(buf[:n])
+        fmt.Fprintf(rw, "Echo: %s", input)
+        rw.Flush()
+    }
+}
+```

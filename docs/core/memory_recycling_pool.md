@@ -1,43 +1,56 @@
 # Memory Recycling Pool
 
-Wyre implements a memory recycling pool using standard library `sync.Pool` to achieve near-zero GC pressure for request payloads and metadata allocation.
+To achieve near-zero garbage collection (GC) pressure and sustain high-throughput request loads, Wyre integrates an automatic memory recycling pool for request payload buffers and metadata.
 
 ## Overview
 
-Allocating new structures on every incoming request is one of the main causes of garbage collection (GC) pauses in high-throughput HTTP servers. To mitigate this, Wyre uses pooled `Request` objects in [request.go](file:///c:/projects/oun/request.go), allowing structures to be reused across connections.
+In traditional Go web frameworks, new request objects, maps, and byte slices are allocated on the heap for every single incoming HTTP request. Under heavy load, this pattern places massive pressure on Go's runtime Garbage Collector, causing latency spikes and CPU cycles spent on cleanup.
 
-## Implementation Details
+Wyre solves this problem by utilizing recycled `Request` objects. Once a request lifecycle ends, Wyre automatically resets the fields and returns the memory blocks back to the pool to be reused for subsequent requests.
 
-### 1. The Request Pool
-The request pool is defined as a package-level variable [requestPool](file:///c:/projects/oun/request.go#L47):
+## How it Works Under the Hood
+
+The recycling mechanism operates transparently. When a connection is accepted:
+1. **Acquisition**: Wyre fetches a recycled `Request` object from the internal pool.
+2. **Execution**: The incoming request data is parsed, populated into the struct, and dispatched to your handler.
+3. **Release & Reset**: After your handler finishes writing the response, the server releases the request object back to the pool. During release, all internal maps and fields are cleared:
+   - Header and parameter maps are cleared of their entries but retain their memory capacity.
+   - Body buffers smaller than 64KB are cleared and reused; larger buffers are discarded to prevent long-term memory bloat.
+
+## Safe Usage Guidelines
+
+Because request structures are pooled and recycled, developers must follow these simple rules to avoid data corruption or race conditions:
+
+### 1. Do Not Retain References Beyond Handler Lifetime
+Once your handler function returns, the `*wyre.Request` object and its buffer slices (such as `r.rawBody`) are recycled. You must not access the request or any of its fields after the handler returns.
+
+### 2. Copy Data for Asynchronous Processing
+If you spin up background goroutines that need to read request data (like headers, body contents, or query strings) after the handler has completed, you **must copy** that data to new variables beforehand.
+
+**Incorrect (Potential Race Condition / Corrupted Data):**
 ```go
-var requestPool = sync.Pool{
-    New: func() interface{} {
-        return &Request{
-            Headers: make(map[string][]string),
-            params:  make(map[string]string),
-        }
-    },
+func myHandler(w *wyre.ResponseWriter, r *wyre.Request) {
+    // DO NOT DO THIS: The request object will be recycled 
+    // while the goroutine is reading it.
+    go func() {
+        processPayload(r.rawBody) 
+    }()
+    
+    w.WriteFixedBody(202, "text/plain", []byte("Accepted"))
 }
 ```
 
-### 2. Allocation & Retrieval
-- Handlers or server routines fetch a recycled `Request` object using [AcquireRequest](file:///c:/projects/oun/request.go#L56).
-- The parsing process populates this acquired struct in [ParseRequest](file:///c:/projects/oun/request.go#L338).
+**Correct (Safe Copying):**
+```go
+func myHandler(w *wyre.ResponseWriter, r *wyre.Request) {
+    // Create a local copy of the body bytes
+    bodyCopy := make([]byte, len(r.rawBody))
+    copy(bodyCopy, r.rawBody)
 
-### 3. Cleanup & Recycling
-To prevent memory leaks and data pollution between requests:
-- When a request cycle finishes in [handleConn](file:///c:/projects/oun/server.go#L277), it calls [ReleaseRequest](file:///c:/projects/oun/request.go#L60).
-- This triggers the [Reset](file:///c:/projects/oun/request.go#L65) method, which:
-  - Wipes scalar fields (e.g., `Method`, `Path`, `Proto`, `RemoteAddr`).
-  - Clears `Headers` and path `params` maps by deleting keys while preserving map capacity.
-  - Recycles the `rawBody` slice: If the capacity of the body buffer exceeds `64KB`, it is set to `nil` to allow GC to clean up very large payloads and prevent memory bloat. If it is under `64KB`, the slice is truncated via `rawBody[:0]` and retained for subsequent requests.
-
----
-
-## Implementation Status & Missing Elements
-
-- **Status:** **Partially Implemented** (strictly for request handling objects).
-- **Missing Elements / Limitations:**
-  - **No ResponseWriter Pooling:** A new `ResponseWriter` instance is allocated via `newResponseWriter` for every single request.
-  - **No bufio Reader/Writer Pooling:** New `bufio.Reader` and `bufio.Writer` instances are allocated per connection (e.g., `bufio.NewReader(conn)`) instead of using recycled reader/writer pools.
+    go func() {
+        processPayload(bodyCopy) // Safe to read anytime
+    }()
+    
+    w.WriteFixedBody(202, "text/plain", []byte("Accepted"))
+}
+```

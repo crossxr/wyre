@@ -1,41 +1,79 @@
 # Raw Socket Architecture
 
-Wyre implements a raw socket architecture where TCP connections are accepted, handled, and processed directly at the OS layer using Go's standard `net` package, without any wrapping or reliance on Go's `net/http` server implementation.
+Wyre is designed to run directly on top of Go's native TCP network socket listener (`net.Listen`), bypassing the standard library's `net/http` package entirely. This architecture provides low-level control, minimized memory allocations, and optimized request lifecycles.
 
-## Overview
+## Architecture Benefits
 
-The core networking loop resides in [server.go](file:///c:/projects/oun/server.go). The HTTP server functions as a low-level TCP daemon that manages raw network streams directly.
+By managing TCP connection loops and custom protocol parsing at the socket level, Wyre delivers several key advantages:
 
-## Implementation Details
+1. **Minimized Allocations**: Avoids standard HTTP server structure overheads. Request metadata and bodies are recycled using internal pooling, keeping garbage collection (GC) pressure extremely low.
+2. **Explicit Concurrency Control**: A connection semaphore manages maximum parallel connections at the socket level, rejecting overloaded traffic before it consumes server system resources.
+3. **Optimized Socket Lifecycles**: Connection keep-alive timeouts and request-count thresholds are enforced on the TCP connection directly, ensuring quick resource reclamation.
 
-### 1. Direct Socket Listening
-The server starts listening by binding directly to the TCP socket:
-```go
-ln, err := net.Listen("tcp", s.cfg.Addr)
-```
-See the [ListenAndServe](file:///c:/projects/oun/server.go#L63) implementation.
+## Configuring the Server
 
-### 2. Connection Lifecycle Management
-The main event loop accepts incoming connections and tracks them in a thread-safe map to support graceful shutdowns:
-- **Acceptance:** Accepted connections are processed in a new goroutine (see [serve](file:///c:/projects/oun/server.go#L117)).
-- **Tracking:** Connections are added and removed from the active connections tracking map using [trackConn](file:///c:/projects/oun/server.go#L158).
-- **Graceful Shutdown:** The [Shutdown](file:///c:/projects/oun/server.go#L171) method closes the listener to reject new connections and waits for active connections to finish or forces them closed if the context deadline is reached.
+When initializing a Wyre server, you can supply custom configuration values using the `wyre.Config` struct.
 
-### 3. Flow Control & Production Safety
-To avoid server crashes or excessive resource consumption on the host OS:
-- **Connection Limiter:** An optional semaphore (`chan struct{}`) limits maximum concurrent active connections. If at capacity, incoming connections are rejected immediately with a `503 Service Unavailable` response via [WriteError](file:///c:/projects/oun/response.go#L202) and closed.
-- **Deadlines:** Connection read/write/idle timeouts are manually enforced on the raw socket via `conn.SetReadDeadline` and `conn.SetWriteDeadline` (see [handleConn](file:///c:/projects/oun/server.go#L198)).
-- **Keep-Alive Limits:** The server keeps track of requests handled per connection and exits the processing loop when `MaxRequestsPerConn` is reached.
+### Configuration Properties
 
-### 4. Custom HTTP Parsing
-Rather than delegating HTTP parsing to Go's standard library, Wyre uses its own parser in [request.go](file:///c:/projects/oun/request.go):
-- **Request Line:** Decoded line-by-line using [readLine](file:///c:/projects/oun/request.go#L110) and split to parse the method, target, and protocol (e.g., HTTP/1.1).
-- **Header Parsing:** Headers are parsed sequentially up to security thresholds to prevent Slowloris or buffer-overflow style exploits (e.g., maximum headers limit).
-- **Body Parsing:** Handled via content-length limits or chunked transfer-encoding readers.
+| Property | Type | Description | Default |
+|---|---|---|---|
+| `Addr` | `string` | The IP and port to bind to (e.g., `"127.0.0.1:8080"`). | *Required* |
+| `ReadTimeout` | `time.Duration` | The maximum duration for reading the entire request. | `10 * time.Second` |
+| `WriteTimeout` | `time.Duration` | The maximum duration before timing out writes of the response. | `10 * time.Second` |
+| `IdleTimeout` | `time.Duration` | The maximum amount of time to wait for the next request on a keep-alive connection. | `60 * time.Second` |
+| `MaxRequestsPerConn` | `int` | The maximum number of requests to serve on a single keep-alive TCP connection before closing it. | `1000` |
+| `MaxConnections` | `int` | The maximum number of concurrent active TCP connections. When exceeded, incoming connections are rejected with a 503 error. Set to `0` for unlimited. | `10000` |
+| `Handler` | `wyre.Handler` | The router or request handler instance. | `nil` (Uses Router if created) |
 
 ---
 
-## Implementation Status & Missing Elements
+### Example: Custom Server Setup
 
-- **Status:** **Fully Implemented**. Wyre communicates with the operating system directly using standard raw TCP sockets (`net.Conn`) and handles all protocol parsing manually.
-- **Missing Elements:** None. The core server engine is 100% independent of `net/http`'s server implementation.
+The following example shows how to initialize and configure a Wyre server with custom timeouts and connection limits:
+
+```go
+package main
+
+import (
+    "time"
+    "wyre"
+)
+
+func main() {
+    router := wyre.NewRouter()
+    router.HandleFunc("GET", "/", func(w *wyre.ResponseWriter, r *wyre.Request) {
+        w.WriteFixedBody(200, "text/plain", []byte("Hello from a highly customized server!"))
+    })
+
+    // Setup custom server configurations
+    config := wyre.Config{
+        Addr:               "0.0.0.0:8080",
+        ReadTimeout:        5 * time.Second,
+        WriteTimeout:       5 * time.Second,
+        IdleTimeout:        30 * time.Second,
+        MaxRequestsPerConn: 500,
+        MaxConnections:     2500, // Limit concurrency to protect resources
+        Handler:            router,
+    }
+
+    // Launch the server
+    server := wyre.NewWithConfig(config)
+    server.ListenAndServe()
+}
+```
+
+## Graceful Shutdown
+
+Wyre supports graceful shutdowns. Calling `Shutdown(ctx)` stops the server from accepting new TCP connections, finishes outstanding active request lifecycles, and terminates cleanly when all active requests are finished or when the context deadline is reached.
+
+```go
+// Create server context
+ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+defer cancel()
+
+// Gracefully shutdown the server
+if err := server.Shutdown(ctx); err != nil {
+    log.Fatalf("Graceful shutdown failed: %v", err)
+}
+```

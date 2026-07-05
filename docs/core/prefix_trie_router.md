@@ -1,46 +1,70 @@
 # Prefix Trie Router
 
-Wyre contains a custom segment-based prefix trie router that provides deterministic, priority-based route matching with dynamic parameter support.
+Wyre features a segment-based prefix trie router that provides deterministic, priority-based route matching with dynamic path parameters and middleware support. The router is designed to scale efficiently with the depth of the URI path rather than the total number of registered routes.
 
-## Overview
+## Routing Basics
 
-The router implementation is located in [router.go](file:///c:/projects/oun/router.go). It represents paths as a hierarchy of segments, allowing efficient routing lookups that scale with the depth of the URI path rather than the total number of registered routes.
+To use the routing system, create a new router instance and register handlers for specific HTTP methods and path patterns.
 
-## Implementation Details
-
-### 1. Data Structure
-The router is backed by a tree of `node` structs defined in [router.go](file:///c:/projects/oun/router.go#L17):
 ```go
-type node struct {
-    segment  string
-    isParam  bool
-    handlers map[string]Handler
-    children []*node
+package main
+
+import (
+    "wyre"
+)
+
+func main() {
+    router := wyre.NewRouter()
+
+    // Match exact static paths
+    router.HandleFunc("GET", "/api/v1/status", statusHandler)
+    router.HandleFunc("POST", "/api/v1/data", dataHandler)
+}
+
+func statusHandler(w *wyre.ResponseWriter, r *wyre.Request) {
+    w.WriteFixedBody(200, "text/plain", []byte("OK"))
+}
+
+func dataHandler(w *wyre.ResponseWriter, r *wyre.Request) {
+    // Process post request
 }
 ```
 
-### 2. Deterministic & Priority-Based Matching
-When matching incoming requests, the router implements the following priority in its [match](file:///c:/projects/oun/router.go#L59) method:
-1. **Static Match First:** It loops through all non-parameter child nodes first to see if any static segment matches exactly.
-2. **Dynamic Parameter Match Second:** If no static match succeeds, it attempts to match parameter nodes (segments starting with `:` in the route definition).
-3. **Backtracking:** If a path segment matches a child node but subsequent segments fail to match, the matching algorithm backtracks to evaluate other potential matching paths.
+## Route Matching Priority
 
-### 3. Parameter Capture
-For dynamic segments (e.g., `/users/:id`), the segment key is stored in the node's `segment` field. During matching, the parameter name and parsed path segment are captured in a temporary map and subsequently injected into `r.params` in [ServeHTTP](file:///c:/projects/oun/router.go#L143). Handlers can retrieve this using `r.Param("key")` (see [Param](file:///c:/projects/oun/request.go#L88)).
+Wyre evaluates path matches deterministically using the following segment priority:
+1. **Static Match**: Evaluates if any static segment matches exactly.
+2. **Dynamic Parameter Match**: Evaluates dynamic path segments (e.g., `:id`).
+3. **Backtracking**: If a path match fails midway, the router automatically backtracks to evaluate other potential routing paths.
 
-### 4. Middleware Wrapping
-The [Router](file:///c:/projects/oun/router.go#L97) supports global middlewares. When dispatching, it wraps the final matched handler in the middleware chain in reverse order so that the first middleware registered runs first:
+## Path Parameters
+
+You can define dynamic path parameters by prefixing a segment with a colon (`:`). Handlers can retrieve captured parameter values using the `r.Param("key")` method.
+
 ```go
-for i := len(rt.middlewares) - 1; i >= 0; i-- {
-    finalHandler = rt.middlewares[i](finalHandler)
-}
+router.HandleFunc("GET", "/users/:userId/orders/:orderId", func(w *wyre.ResponseWriter, r *wyre.Request) {
+    userID := r.Param("userId")
+    orderID := r.Param("orderId")
+    
+    response := "User: " + userID + ", Order: " + orderID
+    w.WriteFixedBody(200, "text/plain", []byte(response))
+})
 ```
 
----
+> [!NOTE]
+> All paths are evaluated strictly on segment boundaries (split by `/`). A dynamic segment matches exactly one path segment.
 
-## Implementation Status & Missing Elements
+## Middlewares
 
-- **Status:** **Partially Implemented**. The router supports static segments, segment parameters, deterministic priority matching, and backtracking.
-- **Missing Elements:**
-  - **No Wildcard/Catch-All Support:** There is no wildcard matching (e.g. `*` or `*filepath` to match arbitrary sub-paths or multiple path segments). All paths are split strictly on `/` boundaries, meaning each dynamic segment can only match exactly one path segment.
-  - **No Regular Expressions:** The router does not support regex constraints on segments.
+You can register global middlewares to wrap your route handlers. Middlewares execute in the order they are registered.
+
+```go
+router := wyre.NewRouter()
+
+// Register global middlewares
+router.Use(wyre.Recovery())
+router.Use(wyre.CORS())
+
+// You can also wrap specific handlers manually
+router.Handle("POST", "/admin", adminOnlyMiddleware(wyre.HandlerFunc(adminHandler)))
+```
