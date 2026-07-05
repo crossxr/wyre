@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hackernoon/pixel-icon-library": "^1.1.0",
+    "@libsql/client": "^0.17.4",
     "motion": "^12.42.2",
     "next": "16.2.10",
     "react": "19.2.4",
