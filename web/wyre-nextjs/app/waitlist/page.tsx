@@ -185,7 +185,14 @@ export default function Waitlist() {
                 }}
                 className="waitlist-submit"
               >
-                {loading ? 'PROCESSING...' : 'REQUEST EARLY ACCESS'}
+                {loading ? (
+                  'PROCESSING...'
+                ) : (
+                  <>
+                    <img src="/logo/logomark.png" alt="Wyre Logomark" style={{ height: '30px', width: 'auto', objectFit: 'contain' }} />
+                    <span>REQUEST EARLY ACCESS</span>
+                  </>
+                )}
               </button>
 
               {status?.type === 'error' && (
