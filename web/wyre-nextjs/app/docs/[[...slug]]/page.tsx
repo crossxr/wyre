@@ -171,6 +171,8 @@ const MarkdownRenderer: React.FC<{ content: string }> = ({ content }) => {
 
       let inList = false
       let listItems: string[] = []
+      let inTable = false
+      let tableRows: string[][] = []
 
       const flushList = (key: string) => {
         if (listItems.length > 0) {
@@ -187,40 +189,94 @@ const MarkdownRenderer: React.FC<{ content: string }> = ({ content }) => {
         }
       }
 
+      const flushTable = (key: string) => {
+        if (tableRows.length > 0) {
+          const headers = tableRows[0]
+          const bodyRows = tableRows.slice(2)
+          blocks.push(
+            <div key={key} style={{ overflowX: 'auto', margin: '24px 0', border: '1px solid #1e1e1e', borderRadius: '12px', background: '#070708' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left', color: '#a1a1aa' }}>
+                <thead>
+                  <tr style={{ background: '#0c0c0e', borderBottom: '1px solid #1e1e1e' }}>
+                    {headers.map((h, idx) => (
+                      <th key={idx} style={{ padding: '14px 16px', fontWeight: 600, color: '#f8fafc', fontFamily: 'var(--font-inter)' }}>
+                        {renderInlineMarkdown(h)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {bodyRows.map((row, rIdx) => (
+                    <tr key={rIdx} style={{ borderBottom: rIdx < bodyRows.length - 1 ? '1px solid #1e1e1e' : 'none', background: rIdx % 2 === 0 ? 'transparent' : '#0a0a0c' }}>
+                      {row.map((cell, cIdx) => (
+                        <td key={cIdx} style={{ padding: '14px 16px', fontFamily: 'var(--font-inter)', lineHeight: 1.6 }}>
+                          {renderInlineMarkdown(cell)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+          tableRows = []
+        }
+      }
+
       for (let j = 0; j < lines.length; j++) {
         const line = lines[j].trim()
 
-        if (line.startsWith('## ')) {
+        if (line.startsWith('|') && line.endsWith('|')) {
+          flushList(`list-before-table-${i}-${j}`)
+          inList = false
+          inTable = true
+          const cells = line.split('|').slice(1, -1).map(c => c.trim())
+          tableRows.push(cells)
+        } else if (line.startsWith('## ')) {
           flushList(`list-before-h2-${i}-${j}`)
           inList = false
+          flushTable(`table-before-h2-${i}-${j}`)
+          inTable = false
           const text = line.substring(3).trim()
           const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-')
           blocks.push(<h2 id={id} key={`h2-${i}-${j}`} style={h2Style}>{text}</h2>)
         } else if (line.startsWith('### ')) {
           flushList(`list-before-h3-${i}-${j}`)
           inList = false
+          flushTable(`table-before-h3-${i}-${j}`)
+          inTable = false
           const text = line.substring(4).trim()
           const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-')
           blocks.push(<h3 id={id} key={`h3-${i}-${j}`} style={h3Style}>{text}</h3>)
         } else if (line.startsWith('- ') || line.startsWith('* ')) {
+          flushTable(`table-before-list-${i}-${j}`)
+          inTable = false
           inList = true
           listItems.push(line.substring(2).trim())
         } else if (line === '---') {
           flushList(`list-before-hr-${i}-${j}`)
           inList = false
+          flushTable(`table-before-hr-${i}-${j}`)
+          inTable = false
           blocks.push(<hr key={`hr-${i}-${j}`} style={{ border: 'none', borderBottom: '1px solid #1e1e1e', margin: '32px 0' }} />)
         } else if (line === '') {
           flushList(`list-before-empty-${i}-${j}`)
           inList = false
+          flushTable(`table-before-empty-${i}-${j}`)
+          inTable = false
         } else {
           if (inList) {
             listItems[listItems.length - 1] += ' ' + line
+          } else if (inTable) {
+            const cells = line.split('|').slice(1, -1).map(c => c.trim())
+            tableRows.push(cells)
           } else {
             blocks.push(<p key={`p-${i}-${j}`} style={pStyle}>{renderInlineMarkdown(line)}</p>)
           }
         }
       }
       flushList(`list-end-${i}`)
+      flushTable(`table-end-${i}`)
     }
   }
 

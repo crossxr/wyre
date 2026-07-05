@@ -643,6 +643,265 @@ func TestConcurrencyLimiterQueueTimeout(t *testing.T) {
 	}
 }
 
+func TestAdaptiveLimiter(t *testing.T) {
+	router := NewRouter()
+	cfgLimiter := AdaptiveLimiterConfig{
+		MinLimit:     1,
+		MaxLimit:     5,
+		InitialLimit: 2,
+		Alpha:        1.0,
+		Beta:         2.0,
+		QueueLimit:   1,
+		QueueTimeout: 100 * time.Millisecond,
+	}
+	limiter := AdaptiveLimiter(cfgLimiter)
+
+	router.Handle("GET", "/adaptive", limiter(HandlerFunc(func(w *ResponseWriter, r *Request) {
+		delayStr := r.Header("X-Delay-Ms")
+		if delayStr != "" {
+			if delay, err := strconv.Atoi(delayStr); err == nil {
+				time.Sleep(time.Duration(delay) * time.Millisecond)
+			}
+		} else {
+			time.Sleep(20 * time.Millisecond)
+		}
+		w.WriteFixedBody(200, "text/plain", []byte("done"))
+	})))
+
+	cfg := DefaultConfig("127.0.0.1:0")
+	cfg.Handler = router
+	server := NewWithConfig(cfg)
+
+	listener, err := net.Listen("tcp", server.cfg.Addr)
+	if err != nil {
+		t.Fatalf("failed to listen: %v", err)
+	}
+	server.ln = listener
+	server.conns = make(map[net.Conn]struct{})
+
+	go func() {
+		_ = server.serve()
+	}()
+	defer server.Shutdown(context.Background())
+	addr := listener.Addr().String()
+
+	sendReq := func(delayMs string) string {
+		conn, err := net.Dial("tcp", addr)
+		if err != nil {
+			return err.Error()
+		}
+		defer conn.Close()
+		reqLine := "GET /adaptive HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n"
+		if delayMs != "" {
+			reqLine += "X-Delay-Ms: " + delayMs + "\r\n"
+		}
+		reqLine += "\r\n"
+		_, _ = conn.Write([]byte(reqLine))
+		rdr := bufio.NewReader(conn)
+		line, _ := rdr.ReadString('\n')
+		return line
+	}
+
+	results := make(chan string, 3)
+	go func() {
+		results <- sendReq("")
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	go func() {
+		results <- sendReq("")
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	go func() {
+		results <- sendReq("")
+	}()
+
+	var resp1, resp2, resp3 string
+	for i := 0; i < 3; i++ {
+		resp := <-results
+		t.Logf("TestAdaptiveLimiter response %d: %q", i, resp)
+		if strings.Contains(resp, "200 OK") {
+			if resp1 == "" {
+				resp1 = resp
+			} else if resp2 == "" {
+				resp2 = resp
+			} else {
+				resp3 = resp
+			}
+		}
+	}
+
+	if resp1 == "" || resp2 == "" || resp3 == "" {
+		t.Errorf("expected all three requests to eventually succeed with 200 OK, got resp1=%q, resp2=%q, resp3=%q", resp1, resp2, resp3)
+	}
+}
+
+func TestAdaptiveLimiterQueueOverflow(t *testing.T) {
+	router := NewRouter()
+	cfgLimiter := AdaptiveLimiterConfig{
+		MinLimit:     1,
+		MaxLimit:     2,
+		InitialLimit: 1,
+		Alpha:        1.0,
+		Beta:         2.0,
+		QueueLimit:   1,
+		QueueTimeout: 200 * time.Millisecond,
+	}
+	limiter := AdaptiveLimiter(cfgLimiter)
+
+	router.Handle("GET", "/limit", limiter(HandlerFunc(func(w *ResponseWriter, r *Request) {
+		time.Sleep(100 * time.Millisecond)
+		w.WriteFixedBody(200, "text/plain", []byte("done"))
+	})))
+
+	cfg := DefaultConfig("127.0.0.1:0")
+	cfg.Handler = router
+	server := NewWithConfig(cfg)
+
+	listener, err := net.Listen("tcp", server.cfg.Addr)
+	if err != nil {
+		t.Fatalf("failed to listen: %v", err)
+	}
+	server.ln = listener
+	server.conns = make(map[net.Conn]struct{})
+
+	go func() {
+		_ = server.serve()
+	}()
+	defer server.Shutdown(context.Background())
+	addr := listener.Addr().String()
+
+	sendReq := func() string {
+		conn, err := net.Dial("tcp", addr)
+		if err != nil {
+			return err.Error()
+		}
+		defer conn.Close()
+		_, _ = conn.Write([]byte("GET /limit HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"))
+		rdr := bufio.NewReader(conn)
+		line, _ := rdr.ReadString('\n')
+		return line
+	}
+
+	results := make(chan string, 3)
+
+	go func() {
+		results <- sendReq()
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	go func() {
+		results <- sendReq()
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	go func() {
+		results <- sendReq()
+	}()
+
+	var count200, count429 int
+	for i := 0; i < 3; i++ {
+		resp := <-results
+		t.Logf("TestAdaptiveLimiterQueueOverflow response %d: %q", i, resp)
+		if strings.Contains(resp, "200 OK") {
+			count200++
+		} else if strings.Contains(resp, "429 Too Many Requests") {
+			count429++
+		}
+	}
+
+	if count200 != 2 {
+		t.Errorf("expected 2 successful 200 OK responses, got %d", count200)
+	}
+	if count429 != 1 {
+		t.Errorf("expected 1 rejected 429 response, got %d", count429)
+	}
+}
+
+func TestAdaptiveLimiterQueueTimeout(t *testing.T) {
+	router := NewRouter()
+	cfgLimiter := AdaptiveLimiterConfig{
+		MinLimit:     1,
+		MaxLimit:     2,
+		InitialLimit: 1,
+		Alpha:        1.0,
+		Beta:         2.0,
+		QueueLimit:   1,
+		QueueTimeout: 20 * time.Millisecond,
+	}
+	limiter := AdaptiveLimiter(cfgLimiter)
+
+	router.Handle("GET", "/limit", limiter(HandlerFunc(func(w *ResponseWriter, r *Request) {
+		time.Sleep(100 * time.Millisecond)
+		w.WriteFixedBody(200, "text/plain", []byte("done"))
+	})))
+
+	cfg := DefaultConfig("127.0.0.1:0")
+	cfg.Handler = router
+	server := NewWithConfig(cfg)
+
+	listener, err := net.Listen("tcp", server.cfg.Addr)
+	if err != nil {
+		t.Fatalf("failed to listen: %v", err)
+	}
+	server.ln = listener
+	server.conns = make(map[net.Conn]struct{})
+
+	go func() {
+		_ = server.serve()
+	}()
+	defer server.Shutdown(context.Background())
+	addr := listener.Addr().String()
+
+	sendReq := func() string {
+		conn, err := net.Dial("tcp", addr)
+		if err != nil {
+			return err.Error()
+		}
+		defer conn.Close()
+		_, _ = conn.Write([]byte("GET /limit HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"))
+		rdr := bufio.NewReader(conn)
+		line, _ := rdr.ReadString('\n')
+		return line
+	}
+
+	results := make(chan string, 2)
+
+	go func() {
+		results <- sendReq()
+	}()
+
+	time.Sleep(5 * time.Millisecond)
+
+	go func() {
+		results <- sendReq()
+	}()
+
+	var resp1, resp2 string
+	for i := 0; i < 2; i++ {
+		resp := <-results
+		t.Logf("TestAdaptiveLimiterQueueTimeout response %d: %q", i, resp)
+		if strings.Contains(resp, "200 OK") {
+			resp1 = resp
+		} else if strings.Contains(resp, "503 Service Unavailable") {
+			resp2 = resp
+		}
+	}
+
+	if resp1 == "" {
+		t.Errorf("expected first request to succeed with 200 OK")
+	}
+	if resp2 == "" {
+		t.Errorf("expected second request to fail with 503 Service Unavailable due to queue timeout")
+	}
+}
+
+
 
 
 

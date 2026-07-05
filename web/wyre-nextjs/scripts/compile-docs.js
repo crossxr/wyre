@@ -26,7 +26,7 @@ function extractHeadings(content) {
 
 function parseFile(dirPath, fileName, category) {
   const filePath = path.join(dirPath, fileName);
-  const rawContent = fs.readFileSync(filePath, 'utf8');
+  const rawContent = fs.readFileSync(filePath, 'utf8').replace(/\r\n/g, '\n');
 
   // Find the first # title
   const lines = rawContent.split('\n');
