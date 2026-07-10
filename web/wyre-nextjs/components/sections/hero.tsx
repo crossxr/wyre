@@ -20,17 +20,7 @@ export const Hero: React.FC = () => {
     <section id="hero" className="hero-section" style={{ paddingBottom: '0px' }}>
       <div className="container">
         <div className="hero-centered">
-          {/* G2 / Capterra ratings */}
-          <div className="ratings-row">
-            <div className="rating-item">
-              <span className="stars">★★★★★</span>
-              <span>4.5/5 G2</span>
-            </div>
-            <div className="rating-item">
-              <span className="stars">★★★★★</span>
-              <span>4.6/5 CAPTERRA</span>
-            </div>
-          </div>
+
 
           {/* Headline */}
           <h1 className="hero-headline-custom">
@@ -40,7 +30,7 @@ export const Hero: React.FC = () => {
 
           {/* Description */}
           <p className="hero-description-custom">
-            A zero-dependency, high-performance Go web engine. Build raw socket HTTP/1.1 and HTTPS servers with deterministic Trie routing, connection hijacking, and automatic memory pooling.
+            An agent-native, high-performance Go web engine. Build raw socket HTTP/1.1 and HTTPS servers with capability auto-discovery, structured error contracts, connection hijacking, and automatic memory pooling.
           </p>
 
           {/* CTAs */}

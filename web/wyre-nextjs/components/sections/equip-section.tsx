@@ -12,9 +12,37 @@ export const EquipSection: React.FC = () => {
         <p className="equip-description">
           Go network applications suffer from framework abstraction overhead, slow reflection-based serializing, and connection drops under load. Wyre unifies raw socket performance, zero-copy streams, and robust recovery middleware into one standalone, agent-ready runtime—delivering microsecond response latencies for modern distributed applications.
         </p>
-        <div className="equip-ctas">
-          <button className="btn-primary-white">Contact sales</button>
-          <button className="btn-secondary-dark">Try Wyre free</button>
+        <div className="equip-ctas" style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+          <a 
+            href="https://github.com/crossxr/wyre" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="btn-primary-white" 
+            style={{ 
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              textDecoration: 'none'
+            }}
+          >
+            <i className="hn hn-github" style={{ fontSize: '18px' }}></i>
+            GitHub
+          </a>
+          <a 
+            href="https://discord.gg/BuYJxsKj" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="btn-secondary-dark" 
+            style={{ 
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              textDecoration: 'none'
+            }}
+          >
+            <i className="hn hn-discord" style={{ fontSize: '18px' }}></i>
+            Discord
+          </a>
         </div>
       </div>
     </section>

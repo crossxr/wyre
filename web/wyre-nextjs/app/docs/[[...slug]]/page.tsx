@@ -351,9 +351,9 @@ export default function DocsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontFamily: 'var(--font-jetbrains-mono)', fontSize: '12px', color: TEXT_DIM }}>
             <div className="version-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22d3ee', boxShadow: '0 0 6px #22d3ee' }} />
-              <span>v1.0.0 Stable</span>
+              <span>v0.1.0 Stable</span>
             </div>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" style={{ color: TEXT_DIM, fontSize: '18px', display: 'flex', alignItems: 'center' }}><i className="hn hn-github"></i></a>
+            <a href="https://github.com/crossxr/wyre" target="_blank" rel="noopener noreferrer" style={{ color: TEXT_DIM, fontSize: '18px', display: 'flex', alignItems: 'center' }}><i className="hn hn-github"></i></a>
           </div>
         </div>
       </header>

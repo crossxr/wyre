@@ -96,7 +96,7 @@ export default function Home() {
         {/* Promo Announcement Banner */}
         <div className="promo-banner" style={{ background: '#2979ff', color: '#ffffff', fontWeight: 600 }}>
           <span className="badge" style={{ background: '#ffffff', color: '#2979ff' }}>NEW</span>
-          <span>Wyre v1.0.0 Standalone release is live!</span>
+          <span>Wyre v0.1.0 Standalone release is live!</span>
           <a href="#developers" style={{ color: '#ffffff', textDecoration: 'underline', marginLeft: '8px' }}>Get started &rarr;</a>
         </div>
 

@@ -41,12 +41,11 @@ export const Header: React.FC = () => {
           </div>
 
           <nav className="nav-links" style={{ gap: '8px' }}>
-            <button className="nav-pill">Product</button>
-            <button className="nav-pill">Solutions</button>
+            <a href="#features" className="nav-pill">Core</a>
+            <a href="#streaming" className="nav-pill">Stream</a>
+            <a href="#agent-discovery" className="nav-pill">Discovery</a>
+            <a href="#sandbox" className="nav-pill">Sandbox</a>
             <Link href="/docs" className="nav-pill">Documentation</Link>
-            <button className="nav-pill">Enterprise</button>
-            <button className="nav-pill">Customers</button>
-            <button className="nav-pill">Pricing</button>
           </nav>
         </div>
 
@@ -92,12 +91,11 @@ export const Header: React.FC = () => {
         </div>
         <div className="mobile-menu-body">
           <nav className="mobile-menu-links">
-            <a href="#product" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Product</a>
-            <a href="#solutions" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Solutions</a>
+            <a href="#features" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Core</a>
+            <a href="#streaming" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Stream</a>
+            <a href="#agent-discovery" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Discovery</a>
+            <a href="#sandbox" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Sandbox</a>
             <Link href="/docs" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Documentation</Link>
-            <a href="#enterprise" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Enterprise</a>
-            <a href="#customers" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Customers</a>
-            <a href="#pricing" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
           </nav>
           <div className="mobile-menu-cta-group">
             <a 
