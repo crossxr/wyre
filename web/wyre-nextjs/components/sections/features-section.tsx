@@ -13,10 +13,7 @@ export const FeaturesSection: React.FC = () => {
             <p className="features-desc">
               Wyre compiles directly against the raw Go runtime to process network connections directly on the OS socket layer. By bypassing slow wrappers and standard HTTP daemons, it achieves microsecond route dispatch latencies.
             </p>
-            <div className="features-ctas">
-              <button className="btn-primary-white">Contact sales</button>
-              <button className="btn-secondary-dark">Try Wyre free</button>
-            </div>
+
           </div>
         </div>
 
@@ -24,7 +21,7 @@ export const FeaturesSection: React.FC = () => {
           {/* Feature 1: Prefix Trie Router */}
           <div className="premium-feature-card card-short">
             <div className="premium-feature-visual-wrapper">
-              <img src="https://ucarecdn.com/de31f587-74a7-41a1-b226-873663dacb4d/-/preview/1000x666/" alt="Prefix Trie Router Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <img src="https://pub-333e6f54888f402495030dfdde337d75.r2.dev/prefix_router.png" alt="Prefix Trie Router Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
             </div>
             <div className="premium-feature-content">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
@@ -43,7 +40,7 @@ export const FeaturesSection: React.FC = () => {
           {/* Feature 2: Memory Recycling Pool */}
           <div className="premium-feature-card card-tall">
             <div className="premium-feature-visual-wrapper">
-              <img src="https://ucarecdn.com/1df9d717-5a90-4c44-8c86-0916aa72e4fd/-/preview/1000x666/" alt="Memory Recycling Pool Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <img src="https://pub-333e6f54888f402495030dfdde337d75.r2.dev/memory_recycling.png" alt="Memory Recycling Pool Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
             </div>
             <div className="premium-feature-content">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
@@ -62,7 +59,7 @@ export const FeaturesSection: React.FC = () => {
           {/* Feature 3: Raw Socket Architecture */}
           <div className="premium-feature-card card-tall">
             <div className="premium-feature-visual-wrapper">
-              <img src="https://ucarecdn.com/1c96f94a-6a37-4a73-a4bc-9b0a1430008c/-/preview/1000x666/" alt="Raw Socket Architecture Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <img src="https://pub-333e6f54888f402495030dfdde337d75.r2.dev/socket_architcture.png" alt="Raw Socket Architecture Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
             </div>
             <div className="premium-feature-content">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
@@ -81,7 +78,7 @@ export const FeaturesSection: React.FC = () => {
           {/* Feature 4: Connection Hijacking */}
           <div className="premium-feature-card card-short">
             <div className="premium-feature-visual-wrapper">
-              <img src="https://ucarecdn.com/4d5f24f7-c4aa-4ed4-bf09-653ffae51b6e/-/preview/1000x666/" alt="Connection Hijacking Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <img src="https://pub-333e6f54888f402495030dfdde337d75.r2.dev/hijacking.png" alt="Connection Hijacking Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
             </div>
             <div className="premium-feature-content">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>

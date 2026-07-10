@@ -2,6 +2,7 @@ package wyre
 
 import (
 	"strings"
+	"sync"
 )
 
 type Handler interface {
@@ -94,15 +95,49 @@ func (n *node) match(segments []string, params map[string]string) (handlers map[
 
 type Middleware func(Handler) Handler
 
+type RouteInfo struct {
+	Path        string            `json:"path"`
+	Method      string            `json:"method"`
+	Description string            `json:"description,omitempty"`
+	Parameters  map[string]string `json:"parameters,omitempty"`
+	InputSchema interface{}       `json:"input_schema,omitempty"`
+}
+
+type RouteOption func(*RouteInfo)
+
+func WithDescription(desc string) RouteOption {
+	return func(r *RouteInfo) {
+		r.Description = desc
+	}
+}
+
+func WithParam(name, desc string) RouteOption {
+	return func(r *RouteInfo) {
+		if r.Parameters == nil {
+			r.Parameters = make(map[string]string)
+		}
+		r.Parameters[name] = desc
+	}
+}
+
+func WithInputSchema(schema interface{}) RouteOption {
+	return func(r *RouteInfo) {
+		r.InputSchema = schema
+	}
+}
+
 type Router struct {
 	root             *node
 	middlewares      []Middleware
 	notFound         Handler
 	methodNotAllowed Handler
+	routes           []RouteInfo
+	disableDiscovery bool
+	mu               sync.RWMutex
 }
 
 func NewRouter() *Router {
-	return &Router{
+	r := &Router{
 		root: &node{
 			handlers: make(map[string]Handler),
 		},
@@ -113,16 +148,38 @@ func NewRouter() *Router {
 			w.WriteFixedBody(405, "text/plain", []byte("405 method not allowed\n"))
 		}),
 	}
+
+	// Auto-register capabilities discovery endpoint
+	r.HandleFunc("GET", "/.well-known/agent-capabilities", r.handleCapabilities)
+
+	return r
 }
 
-func (rt *Router) Handle(method, path string, h Handler) {
+func (rt *Router) Handle(method, path string, h Handler, opts ...RouteOption) {
 	method = strings.ToUpper(method)
 	segs := splitPath(path)
 	rt.root.insert(segs, method, h)
+
+	// Skip the discovery endpoint itself to avoid noise
+	if path == "/.well-known/agent-capabilities" {
+		return
+	}
+
+	info := RouteInfo{
+		Path:   path,
+		Method: method,
+	}
+	for _, opt := range opts {
+		opt(&info)
+	}
+
+	rt.mu.Lock()
+	rt.routes = append(rt.routes, info)
+	rt.mu.Unlock()
 }
 
-func (rt *Router) HandleFunc(method, path string, f func(w *ResponseWriter, r *Request)) {
-	rt.Handle(method, path, HandlerFunc(f))
+func (rt *Router) HandleFunc(method, path string, f func(w *ResponseWriter, r *Request), opts ...RouteOption) {
+	rt.Handle(method, path, HandlerFunc(f), opts...)
 }
 
 func (rt *Router) Use(mw Middleware) {
@@ -141,6 +198,16 @@ func splitPath(path string) []string {
 }
 
 func (rt *Router) ServeHTTP(w *ResponseWriter, r *Request) {
+	if r.Path == "/.well-known/agent-capabilities" {
+		rt.mu.RLock()
+		disabled := rt.disableDiscovery
+		rt.mu.RUnlock()
+		if disabled {
+			rt.notFound.ServeHTTP(w, r)
+			return
+		}
+	}
+
 	reqSegs := splitPath(r.Path)
 
 	handlers, params := rt.root.match(reqSegs, nil)
@@ -164,4 +231,29 @@ func (rt *Router) ServeHTTP(w *ResponseWriter, r *Request) {
 	}
 
 	finalHandler.ServeHTTP(w, r)
+}
+
+func (rt *Router) DisableDiscovery() {
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+	rt.disableDiscovery = true
+}
+
+func (rt *Router) handleCapabilities(w *ResponseWriter, r *Request) {
+	rt.mu.RLock()
+	routes := make([]RouteInfo, len(rt.routes))
+	copy(routes, rt.routes)
+	rt.mu.RUnlock()
+
+	resp := struct {
+		Server    map[string]string `json:"server"`
+		Endpoints []RouteInfo       `json:"endpoints"`
+	}{
+		Server: map[string]string{
+			"name":    "wyre",
+			"version": "0.1.0",
+		},
+		Endpoints: routes,
+	}
+	w.WriteJSON(200, resp)
 }

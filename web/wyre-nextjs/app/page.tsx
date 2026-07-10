@@ -10,6 +10,7 @@ import { EquipSection } from '@/components/sections/equip-section'
 import { FeaturesSection } from '@/components/sections/features-section'
 import { StreamingSection } from '@/components/sections/streaming-section'
 import { TestimonialSection } from '@/components/sections/testimonial-section'
+import { AgentDiscoverySection } from '@/components/sections/agent-discovery'
 import { DevSandbox } from '@/components/sections/dev-sandbox'
 import { Footer } from '@/components/sections/footer'
 
@@ -105,6 +106,7 @@ export default function Home() {
         <EquipSection />
         <FeaturesSection />
         <StreamingSection />
+        <AgentDiscoverySection />
         <TestimonialSection />
         <DevSandbox />
         <Footer />

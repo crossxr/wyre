@@ -4,11 +4,35 @@ import React, { useState } from 'react'
 
 export const Footer: React.FC = () => {
   const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    alert(`Thank you for subscribing to the Wyre newsletter: ${email}`)
-    setEmail('')
+    if (loading) return
+    setLoading(true)
+
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = await res.json()
+      if (res.ok) {
+        alert(data.message || 'Thank you for subscribing!')
+        setEmail('')
+      } else {
+        alert(data.error || 'Something went wrong. Please try again.')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Failed to connect to the server. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -46,7 +70,7 @@ export const Footer: React.FC = () => {
           {/* Right: Landscape Image */}
           <div className="w-full md:w-3/4 flex justify-end">
             <img
-              src="https://ucarecdn.com/7bf97b22-7d0f-499f-8216-d84b146cc461/-/preview/1000x333/"
+              src="https://pub-333e6f54888f402495030dfdde337d75.r2.dev/footer.png"
               alt="Wyre Landscape"
               className="w-full h-auto select-none opacity-25 rounded-xl"
             />
@@ -70,19 +94,34 @@ export const Footer: React.FC = () => {
                 </a>
               </li>
               <li>
-                <a href="#transform" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
-                  Distributed
-                </a>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <a href="#transform" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
+                    Distributed
+                  </a>
+                  <span style={{ fontSize: '9px', textTransform: 'uppercase', padding: '1px 5px', borderRadius: '4px', background: 'rgba(103, 152, 255, 0.1)', color: 'rgba(103, 152, 255, 0.7)', border: '1px solid rgba(103, 152, 255, 0.15)', marginLeft: '8px', fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 600, letterSpacing: '0.5px' }}>
+                    Soon
+                  </span>
+                </div>
               </li>
               <li>
-                <a href="#cloud" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
-                  Wyre Cloud™
-                </a>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <a href="#cloud" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
+                    Wyre Cloud™
+                  </a>
+                  <span style={{ fontSize: '9px', textTransform: 'uppercase', padding: '1px 5px', borderRadius: '4px', background: 'rgba(103, 152, 255, 0.1)', color: 'rgba(103, 152, 255, 0.7)', border: '1px solid rgba(103, 152, 255, 0.15)', marginLeft: '8px', fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 600, letterSpacing: '0.5px' }}>
+                    Soon
+                  </span>
+                </div>
               </li>
               <li>
-                <a href="#sandbox" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
-                  Sandbox
-                </a>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <a href="#sandbox" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
+                    Sandbox
+                  </a>
+                  <span style={{ fontSize: '9px', textTransform: 'uppercase', padding: '1px 5px', borderRadius: '4px', background: 'rgba(103, 152, 255, 0.1)', color: 'rgba(103, 152, 255, 0.7)', border: '1px solid rgba(103, 152, 255, 0.15)', marginLeft: '8px', fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 600, letterSpacing: '0.5px' }}>
+                    Soon
+                  </span>
+                </div>
               </li>
             </ul>
           </div>
@@ -129,23 +168,18 @@ export const Footer: React.FC = () => {
             <h3 className="text-[#6798ff] font-semibold text-base tracking-wider uppercase" style={{ fontFamily: 'var(--font-mondwest)' }}>Resources</h3>
             <ul className="flex flex-col gap-3">
               <li>
-                <a href="#sandbox" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
-                  API Reference
-                </a>
-              </li>
-              <li>
-                <a href="#changelog" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
+                <a href="https://github.com/crossxr/wyre/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
                   Changelog
                 </a>
               </li>
               <li>
-                <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
+                <a href="https://github.com/crossxr/wyre" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
                   GitHub Repository
                 </a>
               </li>
               <li>
-                <a href="#support" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
-                  Support Desk
+                <a href="https://github.com/crossxr/wyre/issues" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
+                  Support
                 </a>
               </li>
             </ul>
@@ -169,9 +203,10 @@ export const Footer: React.FC = () => {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="btn-primary h-10 px-5 text-sm cursor-pointer"
+                  disabled={loading}
+                  className="btn-primary h-10 px-5 text-sm cursor-pointer disabled:opacity-50"
                 >
-                  Subscribe
+                  {loading ? 'Subscribing...' : 'Subscribe'}
                 </button>
               </div>
             </form>

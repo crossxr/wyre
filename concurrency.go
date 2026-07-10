@@ -58,7 +58,7 @@ func ConcurrencyLimiter(maxConcurrent int, queueLimit int, queueTimeout time.Dur
 				// Successfully queued
 			default:
 				w.Header().Set("Retry-After", "5")
-				w.WriteFixedBody(429, "text/plain", []byte("429 Too Many Requests - Concurrency limit reached\n"))
+				w.WriteErrorContract(429, "concurrency_limit_reached", "429 Too Many Requests - Concurrency limit reached", true, 5*time.Second)
 				return
 			}
 
@@ -87,7 +87,7 @@ func ConcurrencyLimiter(maxConcurrent int, queueLimit int, queueTimeout time.Dur
 				req.expired = true
 				req.mu.Unlock()
 				w.Header().Set("Retry-After", "10")
-				w.WriteFixedBody(503, "text/plain", []byte("503 Service Unavailable - Request queue timeout\n"))
+				w.WriteErrorContract(503, "request_queue_timeout", "503 Service Unavailable - Request queue timeout", true, 10*time.Second)
 				return
 			}
 		})
@@ -273,7 +273,7 @@ func AdaptiveLimiter(cfg AdaptiveLimiterConfig) Middleware {
 			acquired, waitChan, req := limiter.acquire()
 			if !acquired {
 				w.Header().Set("Retry-After", "5")
-				w.WriteFixedBody(429, "text/plain", []byte("429 Too Many Requests - Adaptive limit reached\n"))
+				w.WriteErrorContract(429, "adaptive_limit_reached", "429 Too Many Requests - Adaptive limit reached", true, 5*time.Second)
 				return
 			}
 
@@ -296,7 +296,7 @@ func AdaptiveLimiter(cfg AdaptiveLimiterConfig) Middleware {
 				case <-timeoutChan:
 					if limiter.cancel(req) {
 						w.Header().Set("Retry-After", "10")
-						w.WriteFixedBody(503, "text/plain", []byte("503 Service Unavailable - Request queue timeout\n"))
+						w.WriteErrorContract(503, "request_queue_timeout", "503 Service Unavailable - Request queue timeout", true, 10*time.Second)
 						return
 					}
 				}

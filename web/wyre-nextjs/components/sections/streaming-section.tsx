@@ -13,10 +13,7 @@ export const StreamingSection: React.FC = () => {
             <p className="features-desc">
               Go network applications suffer from framework abstraction overhead, slow reflection-based serializing, and connection drops under load. Wyre unifies raw socket performance, zero-copy streams, and robust recovery middleware into one standalone, agent-ready runtime—delivering microsecond response latencies for modern distributed applications.
             </p>
-            <div className="features-ctas">
-              <button className="btn-primary-white">Contact sales</button>
-              <button className="btn-secondary-dark">Try Wyre free</button>
-            </div>
+
           </div>
         </div>
 
@@ -24,7 +21,7 @@ export const StreamingSection: React.FC = () => {
           {/* Feature 1: SSE with Backpressure */}
           <div className="premium-feature-card card-tall">
             <div className="premium-feature-visual-wrapper">
-              <img src="https://ucarecdn.com/1848cf83-74b6-492e-8d5f-36b2a542ae48/-/preview/1000x666/" alt="SSE with Backpressure Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <img src="https://pub-333e6f54888f402495030dfdde337d75.r2.dev/sse_backpressure.png" alt="SSE with Backpressure Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
             </div>
             <div className="premium-feature-content">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
@@ -43,7 +40,7 @@ export const StreamingSection: React.FC = () => {
           {/* Feature 2: Unified Streaming Abstraction */}
           <div className="premium-feature-card card-tall">
             <div className="premium-feature-visual-wrapper">
-              <img src="https://ucarecdn.com/ca61296c-529f-44fb-abe5-1985e799404b/-/preview/1000x666/" alt="Unified Streaming Abstraction Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <img src="https://pub-333e6f54888f402495030dfdde337d75.r2.dev/unified_streming.png" alt="Unified Streaming Abstraction Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
             </div>
             <div className="premium-feature-content">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
@@ -62,7 +59,7 @@ export const StreamingSection: React.FC = () => {
           {/* Feature 3: MCP Streamable HTTP Transport */}
           <div className="premium-feature-card card-tall">
             <div className="premium-feature-visual-wrapper">
-              <img src="https://ucarecdn.com/60dba302-f762-4576-a57b-a2a3d669ed88/-/preview/1000x666/" alt="MCP Streamable Transport Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <img src="https://pub-333e6f54888f402495030dfdde337d75.r2.dev/mcp_transport.png" alt="MCP Streamable Transport Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
             </div>
             <div className="premium-feature-content">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
@@ -81,7 +78,7 @@ export const StreamingSection: React.FC = () => {
           {/* Feature 4: Per-Route Concurrency Limiters */}
           <div className="premium-feature-card card-short">
             <div className="premium-feature-visual-wrapper">
-              <img src="https://ucarecdn.com/1a79c7e1-406d-4b92-bacd-90ce36006748/-/preview/1000x666/" alt="Per-Route Concurrency Limiters Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <img src="https://pub-333e6f54888f402495030dfdde337d75.r2.dev/route_limiter.png" alt="Per-Route Concurrency Limiters Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
             </div>
             <div className="premium-feature-content">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
@@ -100,7 +97,7 @@ export const StreamingSection: React.FC = () => {
           {/* Feature 5: Adaptive Load Shedding */}
           <div className="premium-feature-card card-short">
             <div className="premium-feature-visual-wrapper">
-              <img src="https://ucarecdn.com/77f1abfd-ffdf-451d-819d-db7a27feb8b7/-/preview/1000x666/" alt="Adaptive Load Shedding Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <img src="https://pub-333e6f54888f402495030dfdde337d75.r2.dev/adaptive_load.png" alt="Adaptive Load Shedding Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
             </div>
             <div className="premium-feature-content">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
@@ -119,7 +116,7 @@ export const StreamingSection: React.FC = () => {
           {/* Feature 6: Idempotency-Key Middleware */}
           <div className="premium-feature-card card-tall">
             <div className="premium-feature-visual-wrapper">
-              <img src="https://ucarecdn.com/b3a6faf6-6b57-4f19-b691-d45928fb05a2/-/preview/1000x666/" alt="Idempotency-Key Middleware Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <img src="https://pub-333e6f54888f402495030dfdde337d75.r2.dev/idempotency.png" alt="Idempotency-Key Middleware Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
             </div>
             <div className="premium-feature-content">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
@@ -138,7 +135,7 @@ export const StreamingSection: React.FC = () => {
           {/* Feature 7: Circuit Breakers & Retries */}
           <div className="premium-feature-card card-tall">
             <div className="premium-feature-visual-wrapper">
-              <img src="https://ucarecdn.com/56507764-085b-49d5-bdbe-41e5c235a86f/-/preview/1000x666/" alt="Circuit Breakers & Retries Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <img src="https://pub-333e6f54888f402495030dfdde337d75.r2.dev/circuit-breaker.png" alt="Circuit Breakers & Retries Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
             </div>
             <div className="premium-feature-content">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
@@ -157,7 +154,7 @@ export const StreamingSection: React.FC = () => {
           {/* Feature 8: Agent-Aware Tracing */}
           <div className="premium-feature-card card-short">
             <div className="premium-feature-visual-wrapper">
-              <img src="https://ucarecdn.com/8a369b87-504c-460e-b386-33e56ba01978/-/preview/1000x666/" alt="Agent-Aware Tracing Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <img src="https://pub-333e6f54888f402495030dfdde337d75.r2.dev/agent-tracing.png" alt="Agent-Aware Tracing Mockup" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
             </div>
             <div className="premium-feature-content">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>

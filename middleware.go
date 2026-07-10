@@ -42,7 +42,7 @@ func Recovery() Middleware {
 				if rec := recover(); rec != nil {
 					log.Printf("PANIC recovered in handler: %v\nStack trace:\n%s", rec, debug.Stack())
 					if !w.wroteHeader {
-						w.WriteFixedBody(500, "text/plain", []byte("Internal Server Error"))
+						w.WriteErrorContract(500, "internal_server_error", "Internal Server Error", false, 0)
 					}
 				}
 			}()
