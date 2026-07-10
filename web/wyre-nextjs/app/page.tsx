@@ -97,7 +97,7 @@ export default function Home() {
         <div className="promo-banner" style={{ background: '#2979ff', color: '#ffffff', fontWeight: 600 }}>
           <span className="badge" style={{ background: '#ffffff', color: '#2979ff' }}>NEW</span>
           <span>Wyre v0.1.0 Standalone release is live!</span>
-          <a href="#developers" style={{ color: '#ffffff', textDecoration: 'underline', marginLeft: '8px' }}>Get started &rarr;</a>
+          <a href="https://pkg.go.dev/github.com/crossxr/wyre" style={{ color: '#ffffff', textDecoration: 'underline', marginLeft: '8px' }}>Get started &rarr;</a>
         </div>
 
         <Header />

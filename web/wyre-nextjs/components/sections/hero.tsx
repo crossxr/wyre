@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 
 export const Hero: React.FC = () => {
   const [copied, setCopied] = useState(false)
@@ -30,12 +31,12 @@ export const Hero: React.FC = () => {
 
           {/* Description */}
           <p className="hero-description-custom">
-            An agent-native, high-performance Go web engine. Build raw socket HTTP/1.1 and HTTPS servers with capability auto-discovery, structured error contracts, connection hijacking, and automatic memory pooling.
+            A agemt-native, net/http-compatible web engine with capability auto-discovery, structured error contracts, and raw-socket performance — built for servers that talk to agents, not just browsers.
           </p>
 
           {/* CTAs */}
-          <div className="hero-ctas" style={{ flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-            <div 
+          <div className="hero-ctas flex flex-col md:flex-row items-center justify-center gap-4 w-full">
+            <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -43,7 +44,9 @@ export const Hero: React.FC = () => {
                 backdropFilter: 'blur(12px)',
                 border: '1px solid rgba(103, 152, 255, 0.25)',
                 borderRadius: '8px',
-                padding: '12px 18px',
+                padding: '0 18px',
+                height: '48px',
+                boxSizing: 'border-box',
                 fontFamily: 'var(--font-jetbrains-mono), monospace',
                 fontSize: '14px',
                 color: '#ffffff',
@@ -58,7 +61,7 @@ export const Hero: React.FC = () => {
                 <span style={{ color: 'var(--color-soft-indigo)', userSelect: 'none' }}>$</span>
                 <span>{installCmd}</span>
               </div>
-              <button 
+              <button
                 onClick={handleCopy}
                 style={{
                   background: 'none',
@@ -94,6 +97,34 @@ export const Hero: React.FC = () => {
                 )}
               </button>
             </div>
+
+            <Link
+              href="/docs"
+              className="btn-primary-white w-full md:w-auto"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                textDecoration: 'none',
+                padding: '0 24px',
+                height: '48px',
+                boxSizing: 'border-box',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#000000',
+                backgroundColor: '#ffffff',
+                transition: 'opacity 0.2s, transform 0.1s ease',
+                maxWidth: '420px',
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'translateY(-0.5px)' }}>
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+              </svg>
+              Read Documentation
+            </Link>
           </div>
         </div>
       </div>
